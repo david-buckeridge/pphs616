@@ -18,3 +18,5 @@ plot.data = data.frame(country = gdp$country, gdp = gdp$gdpPercap, le = le$lifeE
 # Plot life expectancy by gdp for each country
 ggplot(data = plot.data, mapping = aes(x=le, y=gdp)) +
   geom_point()
+
+plot(plot.data$le, plot.data$gdp, type='p')
