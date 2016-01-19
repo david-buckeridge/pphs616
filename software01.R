@@ -19,7 +19,8 @@ plot.data = merge(mean.values, continents, by="country")
 ggplot(data = plot.data, aes(x=lifeExp, y=gdpPercap, size=pop, label=country)) +
   geom_point(aes(colour=factor(plot.data$continent), alpha=0.1)) +
   scale_size_continuous(range=c(2,15)) +
-  geom_smooth()
+  guides(alpha=FALSE) +
+  labs(color = "Continent", size="Population")
 
 
 # Same plot using regular graphics
