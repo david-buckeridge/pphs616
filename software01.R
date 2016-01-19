@@ -8,15 +8,19 @@ library(ggplot2)
 data.url = "https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv"
 gapminder = read.csv(data.url)
 
-# Compute group mean of Life Expectancy by Country
-## Using aggregate
-le = aggregate(lifeExp ~ country, data = gapminder, mean)
-gdp = aggregate(gdpPercap ~ country, data = gapminder, mean)
-plot.data = data.frame(country = gdp$country, gdp = gdp$gdpPercap, le = le$lifeExp)
+# Compute mean Life Expectancy and GDP by Country
+## Using aggregate with formula notation
+mean.values = aggregate(cbind(lifeExp, gdpPercap, pop) ~ country, data = gapminder, mean)
+continents = unique(gapminder[,c("country","continent")])
+
+plot.data = merge(mean.values, continents, by="country")
+
+# Plot life expectancy by gdp for each country using ggplot2
+ggplot(data = plot.data, aes(x=lifeExp, y=gdpPercap, size=pop, label=country)) +
+  geom_point(aes(colour=factor(plot.data$continent), alpha=0.1)) +
+  scale_size_continuous(range=c(2,15)) +
+  geom_smooth()
 
 
-# Plot life expectancy by gdp for each country
-ggplot(data = plot.data, mapping = aes(x=le, y=gdp)) +
-  geom_point()
-
+# Same plot using regular graphics
 plot(plot.data$le, plot.data$gdp, type='p')
