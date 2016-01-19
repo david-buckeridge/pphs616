@@ -58,6 +58,11 @@ for (country in continents$country) {
 
 
 
+## Using vectorization 
+## aggregate is actualy a wrapper for tapply, so we have already solved the problem using vectorization!
+## another example would be using by()...
+
+
 
 
 
