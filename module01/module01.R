@@ -89,7 +89,7 @@ for (season in seasons) {
 
 
 ## ------------- Serfling -------------
-# Declare data structures
+# Declare variables
 t = seq(1,nrow(death))
 t2 = t^2
 t3 = t^3
@@ -160,7 +160,7 @@ for (season in seasons) {
 } # for
 
 
-## ------------- Plot Excess Deaths -------------
+## ------------- Plot Excess Deaths by Method -------------
 # Create boxplot of excess deaths by method, with seasons as observations
 # Load a graphics library
 require(lattice)
