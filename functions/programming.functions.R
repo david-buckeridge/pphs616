@@ -19,10 +19,21 @@ update.results.frame <- function(results.frame, values.frame, category, category
 #   in the country column (category.col).
 get.values <- function(data, category.col, category, value.cols) {
   # build the empty results data object with columns corresponding to value.cols
-  values = data.frame()
+  
+  if (length(value.cols) > 0) {
+    n.value = nrow(data[data[,category.col] ==  category,])
+    values = data.frame()
+    for (value.col in value.cols) {
+      values[,value.col] = numeric(n.value)
+    } # for
+    
+  } else {
+    stop("no value.col identified")
+  }
+  
   
   for (value.col in value.cols) {
-    values[,value.col] = get.value(data, catergory.col, category, value.col)
+    values[,value.col] = get.value(data, category.col, category, value.col)
   } # for
   
   return(values)
@@ -36,7 +47,7 @@ get.value <- function(data, category.col, category, value.col) {
   # ensure that we have only value.col to process
   if (length(value.col) != 1) stop("exactly one value.col only")
   
-  values.entry =  data[category.col == category, value.col]
+  value =  data[data[,category.col] == category, value.col]
   
-  return(values.entry)
+  return(value)
 } # get.values.entry

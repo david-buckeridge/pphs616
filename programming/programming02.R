@@ -22,7 +22,7 @@ mean.values.aggregate = aggregate(cbind(lifeExp, gdpPercap, pop) ~ country, data
 
 ## Using a for loop
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
-mean.values.loop = data.frame(country=continents$country, continent=continents$country, 
+mean.values.loop = data.frame(country=continents$country, continent=continents$continent, 
                               lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
                               pop=numeric(n.rows))
 
@@ -44,7 +44,7 @@ for (country in continents$country) {
 
 ## Using a for loop and functions
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
-mean.values.loop.function = data.frame(country=continents$country, continent=continents$country, 
+mean.values.loop.function = data.frame(country=continents$country, continent=continents$continent, 
                               lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
                               pop=numeric(n.rows))
 
@@ -59,20 +59,23 @@ for (country in continents$country) {
 
 ## An example using some functions that are easier to understand...
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
-mean.values.loop.function.simple = data.frame(country=continents$country, continent=continents$country, 
+mean.values.loop.function.simple = data.frame(country=continents$country, continent=continents$continent, 
                                        lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
                                        pop=numeric(n.rows))
 
 
-for (country in continents.country) {
+for (country in continents$country) {
   # Retrieve rows in data frame for current country and all three measures of lifeExp, gdpPercap, and pop
   values = get.values(data = gapminder, category.col = "country", category = country, value.col = c("lifeExp", "gdpPercap", "pop"))
+
+  
+  print(values)
   
   # Calculate mean for each column of interest
   values.mean = mean(values)
   
   # Add calculated values for each column to summary data frame
-  mean.values.loop.function.simple[mean.values.loop.function.clear$country == country, c("lifeExp", "gdpPercap", "pop")] = values.mean
+  mean.values.loop.function.simple[mean.values.loop.function.simple$country == country, c("lifeExp", "gdpPercap", "pop")] = values.mean
   
 } # for - country
 
