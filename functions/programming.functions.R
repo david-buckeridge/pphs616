@@ -12,3 +12,31 @@ update.results.frame <- function(results.frame, values.frame, category, category
   results.frame[results.frame[,category.col]==category, values.col] = mean.value
   return(results.frame)
 } # update.results.frame
+
+
+# A function to retrieve from a data.frame (data) the values from the specified 
+#   column(s) (value.col), which correspond the specified country (category) 
+#   in the country column (category.col).
+get.values <- function(data, category.col, category, value.cols) {
+  # build the empty results data object with columns corresponding to value.cols
+  values = data.frame()
+  
+  for (value.col in value.cols) {
+    values[,value.col] = get.value(data, catergory.col, category, value.col)
+  } # for
+  
+  return(values)
+  
+} # get.values
+
+
+# A function to retreive from a data.frame (data) the values from the specified
+#   column (value.col)
+get.value <- function(data, category.col, category, value.col) {
+  # ensure that we have only value.col to process
+  if (length(value.col) != 1) stop("exactly one value.col only")
+  
+  values.entry =  data[category.col == category, value.col]
+  
+  return(values.entry)
+} # get.values.entry
