@@ -21,15 +21,13 @@ get.values <- function(data, category.col, category, value.cols) {
   # build the empty results data object with columns corresponding to value.cols
   
   if (length(value.cols) > 0) {
-    n.value = nrow(data[data[,category.col] ==  category,])
-    values = data.frame()
-    for (value.col in value.cols) {
-      values[,value.col] = numeric(n.value)
-    } # for
-    
+    n.row = nrow(data[data[,category.col] ==  category,])
+    n.col = length(value.cols)
+    values = as.data.frame(matrix(nrow = n.row, ncol = n.col))
+    colnames(values) = value.cols
   } else {
     stop("no value.col identified")
-  }
+  } # if
   
   
   for (value.col in value.cols) {

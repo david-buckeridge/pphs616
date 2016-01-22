@@ -16,11 +16,12 @@ gapminder = read.csv(data.url)
 continents = unique(gapminder[,c("country","continent")])
 n.rows = nrow(continents)
 
-## Using aggregate with formula notation
+
+#1. Using aggregate with formula notation
 mean.values.aggregate = aggregate(cbind(lifeExp, gdpPercap, pop) ~ country, data = gapminder, mean)
 
 
-## Using a for loop
+#2. Using a for loop
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
 mean.values.loop = data.frame(country=continents$country, continent=continents$continent, 
                               lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
@@ -28,14 +29,15 @@ mean.values.loop = data.frame(country=continents$country, continent=continents$c
 
 
 ## Calculate average values for each country and then place values in data frame
+
+#2a. Example control flow using an integer counter
 for (i in 1:length(continents$country)){
   country = continents$country[i]
   # ...
   
 } # for
 
-
-
+#2b. Example control flow iterating over items in a collection
 for (country in continents$country) {
   # Extract values from gapminder data frame
   lifeExp = mean(gapminder$lifeExp[gapminder$country == country])
@@ -50,7 +52,7 @@ for (country in continents$country) {
 
 
 
-## Using a for loop and functions
+#2c. Example using a for loop and very general functions
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
 mean.values.loop.function = data.frame(country=continents$country, continent=continents$continent, 
                               lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
@@ -65,7 +67,8 @@ for (country in continents$country) {
 } # for - country
 
 
-## An example using some functions that are easier to understand...
+
+#2d. Example using a for loop and some functions that are easier to understand...
 ## Create a data frame with country names, continent names, and blank columns for values to be computed
 mean.values.loop.function.simple = data.frame(country=continents$country, continent=continents$continent, 
                                        lifeExp=numeric(n.rows), gdpPercap=numeric(n.rows), 
@@ -75,20 +78,16 @@ mean.values.loop.function.simple = data.frame(country=continents$country, contin
 for (country in continents$country) {
   # Retrieve rows in data frame for current country and all three measures of lifeExp, gdpPercap, and pop
   values = get.values(data = gapminder, category.col = "country", category = country, value.col = c("lifeExp", "gdpPercap", "pop"))
-
-  
-  print(values)
   
   # Calculate mean for each column of interest
-  values.mean = mean(values)
+  values.mean = apply(values, 2, mean)
   
   # Add calculated values for each column to summary data frame
   mean.values.loop.function.simple[mean.values.loop.function.simple$country == country, c("lifeExp", "gdpPercap", "pop")] = values.mean
-  
 } # for - country
 
 
-## Using vectorization 
+#3. Using vectorization 
 ## aggregate is actualy a wrapper for tapply, so we have already solved the problem using vectorization!
 ## another example would be using by()...
 
@@ -98,10 +97,12 @@ for (country in continents$country) {
 
 # Create data frame with values to be plotted
 ## Select one results data frame to use
-results.to.use = mean.values
+results.to.use = mean.values.aggregate
 #results.to.use = mean.values.loop
 #results.to.use = mean.values.loop.function
-## Create data frame
+#results.to.use = mean.values.loop.function.simple
+
+## Create data frame for plotting
 plot.data = merge(results.to.use, continents, by="country")
 
 
