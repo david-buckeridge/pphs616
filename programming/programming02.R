@@ -28,10 +28,18 @@ mean.values.loop = data.frame(country=continents$country, continent=continents$c
 
 
 ## Calculate average values for each country and then place values in data frame
+for (i in 1:length(continents$country)){
+  country = continents$country[i]
+  # ...
+  
+} # for
+
+
+
 for (country in continents$country) {
   # Extract values from gapminder data frame
   lifeExp = mean(gapminder$lifeExp[gapminder$country == country])
-  gdpPercap = mean(gapminder$gdpPercap[gapminder$country == country])ex
+  gdpPercap = mean(gapminder$gdpPercap[gapminder$country == country])
   pop = mean(gapminder$pop[gapminder$country == country])
   
   # Place calculated values into results data frame 
