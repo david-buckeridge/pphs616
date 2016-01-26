@@ -1,9 +1,6 @@
 ## ------------- Module 1 Example Code -------------
 
 ## ------------- Load Data -------------
-# Replace "myDirectory" with full path to location of the data file
-#  unless you have set path in your project file.
-# setwd("myDirectory")
 
 # Read data files as downloaded from Fluview, with minor cleaning
 death = read.csv("data/Table_S1_clean.csv")
@@ -89,7 +86,7 @@ for (season in seasons) {
 
 
 ## ------------- Serfling -------------
-# Declare variables
+# Define variables
 t = seq(1,nrow(death))
 t2 = t^2
 t3 = t^3
@@ -130,7 +127,7 @@ for (season in seasons) {
 
 
 ## ------------- Poisson -------------
-# Declare data structures
+# Define data structures
 fit.data.p = data.frame(y=death$COUNT, c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
 predict.data.p = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
 predict.data.p.noflua = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=rep(0,nrow(death)), flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)

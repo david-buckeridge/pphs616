@@ -1,10 +1,6 @@
 ## ------------- Module 1 Starter Code -------------
 
 ## ------------- Load Data -------------
-# Replace "myDirectory" with full path to location of the data file
-#  unless you have set path in your project file.
-# setwd("myDirectory")
-
 # Read data files as downloaded from Fluview, with minor cleaning
 death = read.csv("data/Table_S1_clean.csv")
 
@@ -36,21 +32,55 @@ lines(death$DEATHDT, death$COUNT, type='l', col=death.col)
 
 
 # Identify influenza A season boundaries using calendar and WHO reporting data
+## Use greater than 1% for Neuzil and greater than 5% for Izurieta
 
 
-# Calculate and plot season boundaries using neuzil and izurieta definitions
+# Calculate and plot season boundaries using Neuzil and Izurieta definitions
 
 
 
 
 ## ------------- Periseason -------------
+# Calculate excess mortality using periseason approaches
+
+
+# Rate difference (deaths / week)
+
 
 
 ## ------------- Serfling -------------
+# Define variables
+
+# Censor data during circulating influenza periods for fitting model
+
+# Create data frame without outcome for prediction of censored weeks
+
+
+# Fit the model
+
+
+# Predict deaths for censored days (and obtain model fit for other days)
+
+
+# Plot fit and predicted values
+
+
+# Determine excess deaths per season using Serfling model. Consider 
+#  excess over all days in the season and only days the observed count is above the predicted.
+
 
 
 ## ------------- Poisson -------------
+# Define data structures
+
+# Fit the model
+
+# Predict deaths for all days with and without influenza A circulating
+
+# Determine excess deaths per season using Poisson model. 
+
+
 
 
 ## ------------- Plot Excess Deaths by Method -------------
-
+# Create boxplot of excess deaths by method, with seasons as observations
