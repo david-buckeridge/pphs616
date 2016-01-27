@@ -29,10 +29,19 @@ mtext("Deaths in Canada (per week)", side=2, line=2, at=4500, col=death.col, cex
 lines(death$DEATHDT, death$COUNT, type='l', col=death.col)
 
 # Add periseason boundaries (Nov to Apr) to plot as transparent polygons
+nov = seq(from=as.Date("1992-11-01"), to=as.Date("2008-11-01"), by="years")
+apr = seq(from=as.Date("1993-04-01"), to=as.Date("2009-04-01"), by="years")
+y.pts = rep(c(3500,5500,5500,3500), length(nov))
+x.pts = NULL
+for (month in 1:length(nov)){
+  x.pts = c(x.pts, c(nov[month], nov[month], apr[month], apr[month]))
+} # for
+polygon(x.pts, y.pts, density=NULL, col="#00009933", border=NA)
 
 
 # Identify influenza A season boundaries using calendar and WHO reporting data
 ## Use greater than 1% for Neuzil and greater than 5% for Izurieta
+## Don't worry about ensuring weeks are consecutive.
 
 
 # Calculate and plot season boundaries using Neuzil and Izurieta definitions

@@ -56,7 +56,7 @@ death$izurieta = season.i
 # Modify outlier that is not connected to season
 death$neuzil[death$WEEK==206] = FALSE
 
-# Add seasonal boundaries to plot
+# Add seasonal boundaries at base of plot
 points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
 points(death$DEATHDT, (death$izurieta*3500-25), pch="-", cex=1, col='red')
 
