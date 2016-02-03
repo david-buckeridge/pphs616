@@ -11,18 +11,19 @@ library(MESS)
 
 ## ------------- Read Files -------------
 
+# Set this number low for initial attempts, then use all the runs (at the indicated
+#  concentration and duration) to answer the questions.
 nruns = 50
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
 runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 
-# save runids for future use
-write(runids,"runids.txt")
+# If you want to use the same sample of runs each time, save the runids and then reload
+#  them again, as opposed to generating new ids
+# write(runids,"runids.txt")
+# runids = (read.table("runids.txt"))[,1]
 
-# read runids again -- continue from this point after you have generated ids!
-runids = (read.table("runids.txt"))[,1]
-
-# load runds corresponding to runids
+# load runs corresponding to runids
 runs = load.runs(data.dir, runids, os="mac")
 
 
