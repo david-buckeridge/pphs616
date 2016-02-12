@@ -13,7 +13,7 @@ library(MESS)
 
 # Set this number low for initial attempts, then use all the runs (at the indicated
 #  concentration and duration) to answer the questions.
-nruns = 50
+nruns = 10
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
 runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
@@ -52,7 +52,7 @@ res.c2.prevent = mapply(o.prevented, res.c2, outbreaks)
 ## ------------- Apply Poisson Algorithm -------------
 
 # Apply poisson algorithm to runs
-res.pnd = lapply(runs, poisson_all, dow=FALSE, gap=2, window=56, interval=14, threshold=0.05)
+res.p = lapply(runs, poisson_all, dow=FALSE, gap=2, window=56, interval=14, threshold=0.05)
 # Determine detection and timeliness for each run
 res.p.far = mapply(a.far, res.p, outbreaks)
 res.p.detect = mapply(o.detected, res.p, outbreaks)
