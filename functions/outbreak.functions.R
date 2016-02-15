@@ -37,7 +37,9 @@ load.runs <- function(directory, runids, os="mac") {
 	else parse = 39
 	
 	filenames = list.files(directory, pattern= "*.csv", full.names=TRUE)
+
 	filenames.toread = filenames[substr(filenames, parse, nchar(filenames)-4) %in% runids]
+
 	return(lapply(filenames.toread, read.csv))
 } # load.runs
 
