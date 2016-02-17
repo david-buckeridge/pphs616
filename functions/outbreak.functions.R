@@ -73,8 +73,11 @@ a.far <- function(df, truth) {
 	state = truth$state
 	alarm = df$alarm
 	
+	# Alarm is a numeric vector, with value 1 for an alarm, 0 for no alarm
+	# Summing alarm vector when state is FALSE gives false alerts
 	fa = sum(alarm[state==FALSE & !is.na(alarm)])
-	far = fa / length(alarm[state == FALSE & !(is.na(alarm))])
+	# Length of alarm vector when state is FALSE gives number of days with an alarm value
+	far = fa / length(alarm[state == FALSE & !is.na(alarm)])
 	
 	return(far)
 	
@@ -208,7 +211,7 @@ poisson <- function(x, dates=NA, gap=2, window=56, interval=14) {
 			indicator = as.factor(rev(rep(1:full.interval, each=interval)))
 		} # if - part.interval
 		
-		# if dates provided, determine dow
+		# if dates not provided, fit model with only indicator
 		if (length(dates) == 1) {
 			x.df = data.frame(x=x, i=indicator)
 			x.fit = x.df[(x.l-gap-1-window):(x.l-gap-1),]
@@ -218,6 +221,7 @@ poisson <- function(x, dates=NA, gap=2, window=56, interval=14) {
 			x.glm = glm(x ~ i, family="quasipoisson", data=x.fit)
 			
 		} else { 
+		  # if dates provided, fit model with indicator and dow
 			dow = as.factor(format(dates, "%a"))
 			
 			x.df = data.frame(o=x, i=indicator, d=dow)

@@ -13,7 +13,7 @@ library(MESS)
 
 # Set this number low for initial attempts, then use all the runs (at the indicated
 #  concentration and duration) to answer the questions.
-nruns = 100
+nruns = 10
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
 runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
