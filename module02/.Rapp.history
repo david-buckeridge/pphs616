@@ -1,0 +1,4 @@
+data.dir = "data/surveillance_subset_noBWA_100samples/"#
+key.filename = "data/key.csv"
+source("functions/outbreak.functions.R")
+library(MESS)
