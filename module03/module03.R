@@ -1,29 +1,30 @@
+## 0. Load Libraries and Data
+# load libraries
 library(maptools)
 library(spdep)
 library(classInt)
 library(RColorBrewer)
 
+# define path to data
 fsa.shp.name = "data/Montreal_FSA_2001/Montreal_FSA_Census_2001_MTM"
 fsa.visit.name = "data/montreal_ili_visits.csv"
 
-# read shapefile
+# read shapefile with FSA boundaries and census variables
 fsa.shp = readShapePoly(fsa.shp.name, IDvar='FSA')
 # summary(fsa.shp)
 # attributes(fsa.shp@data)
 
-# read visits file
+# read file with data on ili visits by FSA
 fsa.visits = read.table(fsa.visit.name, header=TRUE, sep=",")
 # summary(fsa.visits)
 
-# create a plot of FSA boundaries in Montreal
-plot(fsa.shp)
 
 
-## Plot median family income as choropleth map
+## 1. Plot Census Data Using Different Types of Maps
+## 1.1 Plot median family income as choropleth map
 # define number of classes in plot
 nclr = 5
-# define color palette -- see http://casoilresource.lawr.ucdavis.edu/drupal/node/192
-#  for a nice listing of the color palettes
+# define color palette -- see http://colorbrewer2.org 
 plotclr = brewer.pal(nclr,"Greens")
 # define the classes or breaks for the data
 class = classIntervals(fsa.shp@data$Median_Fam, nclr, style="quantile", dataPrecision=0)
@@ -37,26 +38,30 @@ plot(fsa.shp, col=colcode, add=T)
 title(sub="Median Family Income", main='Classed Choropleth')
 legend('topleft', legend=names(attr(colcode, "table")), fill=attr(colcode,"palette"), cex=0.9, bty='n')
 
-# now create a proportional symbol or 'bubble map' for the same data
+## 1.2 Plot median family income as a proportional symbol or 'bubble map'
 max.symbol.size=5
 min.symbol.size=1
 plotvar = fsa.shp@data$Median_Fam
+# create symbols for each FSA with size scaled to income in FSA
 symbol.size = ((plotvar-min(plotvar))/(max(plotvar)-min(plotvar))*(max.symbol.size-min.symbol.size) + min.symbol.size)
-
+# plot fsa boundaries
 plot(fsa.shp)
+# get coordinates for centroids of FSA
 mtl.cntr = coordinates(fsa.shp)
+# plot circles of graduate size and color at centroids
 points(mtl.cntr, pch=16, col=colcode, cex=symbol.size)
+# outline the circles
 points(mtl.cntr, cex=symbol.size)
 title(sub="Median Family Income", main="Bubble Plot")
 legend('topleft', legend=names(attr(colcode, "table")), fill=attr(colcode,"palette"), cex=0.9, bty='n')
 
 
 
-## Plot Crude ILI Admission Rates 
-# Join my data with data from shapfile - we do this to ensure correct linkage...
+## 2. Plot Crude ILI Visit Rates 
+# Join ili data with data from shapfile - use merge to ensure correct linkage...
 ili = data.frame(fsa=fsa.shp@data$FSA, pop=fsa.shp@data$POP96)
 ili = merge(fsa.visits, ili)
-# note that the 3-year counts are divided by 3 to approximate an annual rate
+# divide 3-year counts by 3 to approximate an annual rate
 ili$rate = (ili$visits / 3) / ili$pop
 
 nclr = 5
@@ -70,17 +75,14 @@ title(sub="Crude Rates of ILI Visits by FSA (Annual Visits per 1,000)")
 legend('topleft', legend=names(attr(colcode.crude, "table")), fill=attr(colcode.crude,"palette"), cex=0.9, bty='n')
 
 
-# Plot adjusted rates?
-# Create map of own values?
 
-
-## Build connectivity matrix
+## 3. Build a connectivity matrix
 # Use triangulation to build connectivity
 fsa.nb.tri = tri2nb(coordinates(fsa.shp), row.names=fsa.shp@data$FSA)
 summary(fsa.nb.tri)
 # What are the least and most connected regions? Verify these regions on the map, does they make sense?
 
-plot(fsa.shp, border='darkgrey', las=1)
+plot(fsa.shp, border='darkgrey', las=1, main='Connectivity by Triangulation')
 plot(fsa.nb.tri, coordinates(fsa.shp), add=TRUE)
 # Does the plot correspond to your idea of connectivity? Why?
 
@@ -91,7 +93,7 @@ max.distance = max(unlist(nbdists(k1, coordinates(fsa.shp))))
 fsa.nb.knn = dnearneigh(coordinates(fsa.shp), 0, max.distance, fsa.shp@data$FSA)
 summary(fsa.nb.knn)
 
-plot(fsa.shp, border='darkgrey', las=1)
+plot(fsa.shp, border='darkgrey', las=1, main='Connectivity by Nearest Neighbors')
 plot(fsa.nb.knn, coordinates(fsa.shp), add=TRUE)
 # Does the plot correspond to your idea of connectivity? Why?
 
@@ -100,7 +102,7 @@ fsa.polys = polygons(fsa.shp)
 fsa.nb.poly = poly2nb(fsa.polys, queen=FALSE)
 summary(fsa.nb.poly)
 
-plot(fsa.shp, border='darkgrey', las=1)
+plot(fsa.shp, border='darkgrey', las=1, main='Connectivity by Shared Borders')
 plot(fsa.nb.poly, coordinates(fsa.shp), add=TRUE)
 # Does the plot correspond to your idea of connectivity? Why?
 
@@ -108,20 +110,16 @@ plot(fsa.nb.poly, coordinates(fsa.shp), add=TRUE)
 fsa.nb = read.gal('data/fsa.nb.clean')
 summary(fsa.nb)
 
-plot(fsa.shp, border='darkgrey', las=1)
+plot(fsa.shp, border='darkgrey', las=1, main='Connectivity by Shared Borders')
 plot(fsa.nb, coordinates(fsa.shp), col="red", add=TRUE)
 plot(fsa.nb.poly, coordinates(fsa.shp), add=TRUE)
 
 
 
-## Estimate EBE Local Rates
+## 4. Smooth Rates
 
 ili.ebe = EBlocal(ili$visits/3, ili$pop, fsa.nb)
 ili.ebe[1:10,]
-hist(ili.ebe$est/ili.ebe$raw*100)
-# Which values changed the most? Why?
-
-# Use Ebest to peform global smoothing. Is there any difference? Explain.
 
 nclr = 5
 plotclr = brewer.pal(nclr, 'Reds')
@@ -141,7 +139,7 @@ title(sub="EBE (Local) Smoothed Rates of ILI Visits (Annual Visits per 1,000)")
 legend('topleft', legend=names(attr(colcode.est, "table")), fill=attr(colcode.est,"palette"), cex=0.9, bty='n')
 
 
-## Estimate Moran's I
+## 5. Estimate Moran's I
 # examine and transform data as needed
 hist(ili.ebe$raw)
 hist(sqrt(ili.ebe$raw))
@@ -149,7 +147,7 @@ hist(fsa.shp@data$Median_Fam)
 
 # create row-standardized weight matrix
 fsa.w = nb2listw(fsa.nb)
-str(fsa.w)
+#str(fsa.w)
 
 (ili.moran = moran.test(sqrt(ili.ebe$raw), fsa.w))
 (income.moran = moran.test(fsa.shp@data$Median_Fam, fsa.w))
