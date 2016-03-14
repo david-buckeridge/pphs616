@@ -11,12 +11,12 @@ fsa.visit.name = "data/montreal_ili_visits.csv"
 
 # read shapefile with FSA boundaries and census variables
 fsa.shp = readShapePoly(fsa.shp.name, IDvar='FSA')
-# summary(fsa.shp)
-# attributes(fsa.shp@data)
+#summary(fsa.shp)
+#attributes(fsa.shp@data)
 
 # read file with data on ili visits by FSA
 fsa.visits = read.table(fsa.visit.name, header=TRUE, sep=",")
-# summary(fsa.visits)
+summary(fsa.visits)
 
 
 
@@ -60,7 +60,7 @@ legend('topleft', legend=names(attr(colcode, "table")), fill=attr(colcode,"palet
 ## 2. Plot Crude ILI Visit Rates 
 # Join ili data with data from shapfile - use merge to ensure correct linkage...
 ili = data.frame(fsa=fsa.shp@data$FSA, pop=fsa.shp@data$POP96)
-ili = merge(fsa.visits, ili)
+ili = merge(fsa.visits, ili, by='fsa')
 # divide 3-year counts by 3 to approximate an annual rate
 ili$rate = (ili$visits / 3) / ili$pop
 
@@ -124,9 +124,13 @@ ili.ebe[1:10,]
 nclr = 5
 plotclr = brewer.pal(nclr, 'Reds')
 class.raw = classIntervals(round(ili.ebe$raw*1000,0), nclr, style='quantile')
+# Note that we take the breaks from the crude rate map and pass them to the 
+#  smoothed rates map so that we have the same class boundaries
+class.est = classIntervals(round(ili.ebe$est*1000,0), n=nclr, style='fixed',
+                           fixedBreaks=class.raw$brks)
 
 colcode.raw = findColours(class.raw, plotclr)
-colcode.est = findColours(class.raw, plotclr)
+colcode.est = findColours(class.est, plotclr)
 
 plot(fsa.shp)
 plot(fsa.shp, col=colcode.raw, add=T)
