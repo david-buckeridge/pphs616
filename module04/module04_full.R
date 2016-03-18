@@ -3,9 +3,9 @@ library(sqldf)
 
 # Read in data
 # (Do not use '.' in the variable name or it will be hard to work with sqldf)
-hospital_discharges <- read.csv('hospital_discharges.csv')
-physician_services <- read.csv('physician_services.csv')
-sampled_patients <- read.csv('sampled_patients.csv')
+hospital_discharges <- read.csv('data/hospital_discharges.csv')
+physician_services <- read.csv('data/physician_services.csv')
+sampled_patients <- read.csv('data/sampled_patients.csv')
 
 # Popular algorithm (Hux et al, 2002):
 # * Two physician diabetes diagnosis codes separated by 730 days or less OR 
@@ -29,7 +29,9 @@ hospital_diag <-
                                        icd LIKE 'E13%' OR
                                        icd LIKE 'E14%'))")
 
-phys_diab <- sqldf("SELECT anon_id, date FROM physician_services WHERE icd LIKE '250%'")
+phys_diab <- sqldf("SELECT anon_id, date 
+                   FROM physician_services 
+                   WHERE icd LIKE '250%'")
 # Self-join to get the 730 days of difference bit.
 phys_diag <- sqldf("SELECT x.anon_id, min(x.date) as diab_date
                     FROM phys_diab x JOIN phys_diab y 

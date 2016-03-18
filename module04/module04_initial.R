@@ -49,7 +49,6 @@ phys_diag <- sqldf("SELECT x.anon_id, min(x.date) as diab_date
                        x.date > y.date AND (x.date - y.date <=730)
                     GROUP BY x.anon_id") 
 
-# Determine and plot the distribution of time between billings for diabetes within individuals
 
 
 
@@ -62,7 +61,3 @@ diab_dates <- sqldf("SELECT anon_id, min(diab_date) as diab_date
                     FROM both_diag GROUP BY anon_id")
 
 
-
-
-# Draw a VENN diagram depicting how many patients were detected from physician billing, hospital discharge, or both
-# Determine diabetes prevalence by sex (M, F) and age-group (0-65, 65+)
