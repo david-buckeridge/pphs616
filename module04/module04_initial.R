@@ -22,8 +22,8 @@ sampled_patients <- read.csv('data/sampled_patients.csv')
 
 
 # Step 1 - Identify people with hospital admission for diabetes
-hospital_diag <- 
-  sqldf("SELECT anon_id, admit as diab_date 
+hospital_diag = 
+  sqldf("SELECT anon_id, admit AS diab_date 
          FROM hospital_discharges 
          WHERE (icd_type='ICD-9'  AND icd LIKE '250%')
             OR (icd_type='ICD-10' AND (icd LIKE 'E10%' OR

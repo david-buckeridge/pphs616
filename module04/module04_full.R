@@ -7,6 +7,11 @@ hospital_discharges <- read.csv('data/hospital_discharges.csv')
 physician_services <- read.csv('data/physician_services.csv')
 sampled_patients <- read.csv('data/sampled_patients.csv')
 
+hospital_discharges$admit = as.Date(hospital_discharges$admit)
+hospital_discharges$discharge = as.Date(hospital_discharges$discharge)
+physician_services$date = as.Date(physician_services$date)
+
+
 # Popular algorithm (Hux et al, 2002):
 # * Two physician diabetes diagnosis codes separated by 730 days or less OR 
 # * One hospitalization diabetes diagnosis code.
@@ -37,7 +42,14 @@ phys_diag <- sqldf("SELECT x.anon_id, min(x.date) as diab_date
                     FROM phys_diab x JOIN phys_diab y 
                     ON x.anon_id=y.anon_id AND 
                        x.date > y.date AND (x.date - y.date <=730)
-                    GROUP BY x.anon_id")                       
+                    GROUP BY x.anon_id")     
+
+phys_diag_time <- sqldf("SELECT x.anon_id, x.date as d1, y.date as d2
+                    FROM phys_diab x JOIN phys_diab y 
+                   ON x.anon_id=y.anon_id AND 
+                   x.date > y.date AND (x.date - y.date <=730)")
+
+
 
 # Stick them both together and find the minimum date.
 both_diag <- sqldf("SELECT anon_id, diab_date FROM phys_diag 
