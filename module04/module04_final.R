@@ -9,6 +9,11 @@ hospital_discharges <- read.csv('data/hospital_discharges.csv')
 physician_services <- read.csv('data/physician_services.csv')
 sampled_patients <- read.csv('data/sampled_patients.csv')
 
+hospital_discharges$admit = as.Date(hospital_discharges$admit)
+hospital_discharges$discharge = as.Date(hospital_discharges$discharge)
+physician_services$date = as.Date(physician_services$date)
+sampled_patients$dob = as.Date(paste(as.character(sampled_patients$dob), "-01", sep=""), format="%Y-%m-%d")
+
 
 # Popular algorithm (Hux et al, 2002):
 # * Two physician diabetes diagnosis codes separated by 730 days or less OR 
@@ -48,7 +53,7 @@ hospital_diag_events =
 
 # When was ICD-10 first used for coding hospital discharges?
 
-first.admit = (as.Date(
+first.admit = as.Date(
   sqldf("SELECT min(admit)
          FROM hospital_discharges
          WHERE (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
@@ -56,9 +61,9 @@ first.admit = (as.Date(
                                        icd LIKE 'E12%' OR
                                        icd LIKE 'E13%' OR
                                        icd LIKE 'E14%'))")[1,1],
-              origin="1970-01-01"))
+              origin="1970-01-01")
 
-first.discharge = (as.Date(
+first.discharge = as.Date(
   sqldf("SELECT min(discharge)
          FROM hospital_discharges
          WHERE (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
@@ -66,7 +71,7 @@ first.discharge = (as.Date(
                                        icd LIKE 'E12%' OR
                                        icd LIKE 'E13%' OR
                                        icd LIKE 'E14%'))")[1,1],  
-              origin="1970-01-01"))
+              origin="1970-01-01")
 
 
 # Hospital admission rate for diabetes
@@ -77,13 +82,41 @@ nrow(hospital_diag_events)/ nrow(sampled_patients) # mix
 
 # Compare rates before and after ICD-10
 hospital_diag_preICD10 = 
-  sqldf("SELECT anon_id, min(discharge) as diab_date
+  sqldf("SELECT anon_id, discharge
           FROM hospital_discharges
-          WHERE icd_type='ICD-9'
-            AND discharge < '2006-04-02'")
+          WHERE icd_type='ICD-9' 
+            AND icd LIKE '250%'
+        ")
+
+hospital_discharge_count_preICD10 =
+  sqldf("SELECT COUNT(*)
+          FROM hospital_discharges
+          WHERE icd_type='ICD-9' 
+        ")[1,1]  
 
 
+nrow(hospital_diag_preICD10) / hospital_discharge_count_preICD10
 
+#    including date limit results in no cases...     AND discharge >= '2006-04-02'
+hospital_diag_postICD10 = 
+  sqldf("SELECT anon_id, discharge
+        FROM hospital_discharges
+        WHERE icd_type='ICD-10' 
+        AND (icd LIKE 'E10%' OR
+             icd LIKE 'E11%' OR
+             icd LIKE 'E12%' OR
+             icd LIKE 'E13%' OR
+             icd LIKE 'E14%')
+        ")
+
+#   including date limit results in no count...      AND discharge >= '2006-04-02'
+hospital_discharge_count_postICD10 =
+  sqldf("SELECT COUNT(*)
+        FROM hospital_discharges
+        WHERE icd_type='ICD-10' 
+        ")[1,1]  
+                            
+nrow(hospital_diag_postICD10) / hospital_discharge_count_postICD10
 
 # Step 2 - Identify physician billing events for diabetes
 phys_diab = 
@@ -94,6 +127,17 @@ phys_diab =
 
 
 # Physician consulation rate
+
+phys_diab_unique = 
+  sqldf("SELECT DISTINCT anon_id
+         FROM physician_services
+         WHERE icd LIKE '250%'")
+
+# period prevalence
+nrow(phys_diab_unique) / nrow(sampled_patients)
+
+# event rate
+nrow(phys_diab) / nrow(physician_services)
 
 
 
@@ -106,15 +150,31 @@ phys_diag =
           AND (x.date - y.date <=730)
          GROUP BY x.anon_id") 
 
+nrow(phys_diag) / nrow(sampled_patients)
 
 
 
 # Step 4 - Join cases detected through physician billing with those detected from hospital discharges.
-both_diag <- sqldf("SELECT anon_id, diab_date FROM phys_diag 
-                   UNION
-                   SELECT anon_id, diab_date FROM hospital_diag")
+both_diag =
+  sqldf("SELECT anon_id, diab_date 
+         FROM phys_diag 
+          UNION
+         SELECT anon_id, diab_date 
+         FROM hospital_diag")
                    
-diab_dates <- sqldf("SELECT anon_id, min(diab_date) as diab_date 
-                    FROM both_diag GROUP BY anon_id")
+diab_dates = 
+  sqldf("SELECT anon_id, min(diab_date) as diab_date 
+         FROM both_diag 
+         GROUP BY anon_id")
+
+
+nrow(diab_dates) / nrow(sampled_patients)
+
+diab_dates_age =
+  sqldf("SELECT x.anon_id, diab_date, dob, sex
+         FROM diab_dates x, sampled_patients y
+         WHERE x.anon_id = y.anon_id")
+
+
 
 
