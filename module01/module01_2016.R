@@ -2,7 +2,7 @@
 
 ## ------------- Load Data -------------
 
-# Read data files as downloaded after minor cleaning
+# Read data files as downloaded from Fluview, with minor cleaning
 death = read.csv("data/Table_S1_clean.csv")
 
 # Cast columns to correct data types
@@ -19,8 +19,7 @@ seasons = seq(1993,2009)
 
 # Plot observed counts
 ## draw a plot with two Date axes, one with quarters, and one with years
-plot(death$DEATHDT, death$COUNT, type='n', bty='n', xaxt='n', yaxt='n', 
-     xlab = "Date", ylab='', ylim=c(3500,5500), xlim=c(head(death$DEATHDT,1), tail(death$DEATHDT,1)))
+plot(death$DEATHDT, death$COUNT, type='n', bty='n', xaxt='n', yaxt='n', xlab = "Date", ylab='', ylim=c(3500,5500), xlim=c(head(death$DEATHDT,1), tail(death$DEATHDT,1)))
 axis.Date(1, at=quarters, format="%b", cex.axis=0.6, mgp=c(3,0.5,0))
 axis.Date(1, at=years, format="%Y", tick=FALSE, cex.axis=0.8, mgp=c(5,1.5,0))
 
@@ -41,40 +40,48 @@ for (month in 1:length(nov)){
 polygon(x.pts, y.pts, density=NULL, col="#00009933", border=NA)
 
 # Identify influenza A season boundaries using calendar and WHO reporting data
-#  according to a simplified verion of the method described by Neuzil
-season.n = NULL
+season.n = NULL # Neuzil
+season.i = NULL # Izurieta
 for (season in seasons) {
 	n.tests = sum(death$FLUA[death$YRSEAS==season])
 	season.n = c(season.n, death$FLUA[death$YRSEAS==season] > n.tests*0.01)
+	season.i = c(season.i, death$FLUA[death$YRSEAS==season] > n.tests*0.05)
 } # for
 
-# Plot seasons
+# Plot season using neuzil and izurieta
 periseason = c("Nov","Dec","Jan","Feb","Mar","Apr")
 death$peri = is.element(format(death$DEATHDT, format="%b"), periseason)
 death$neuzil = season.n
+death$izurieta = season.i
 # Modify outlier that is not connected to season
 death$neuzil[death$WEEK==206] = FALSE
 
 # Add seasonal boundaries at base of plot
 points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
+points(death$DEATHDT, (death$izurieta*3500-25), pch="-", cex=1, col='red')
 
 
 ## ------------- Periseason -------------
 # Calculate excess mortality using periseason approaches
-weeks.p = sum(death$peri==TRUE & death$neuzil==FALSE)
-count.p = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE)])
+weeks.p = sum(death$peri==TRUE & death$neuzil==FALSE & death$izurieta==FALSE)
+count.p = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE & death$izurieta==FALSE)])
 
 weeks.n = sum(death$peri==TRUE & death$neuzil==TRUE)
 count.n = sum(death$COUNT[(death$peri==TRUE & death$neuzil==TRUE)])
 
+weeks.i = sum(death$peri==TRUE & death$izurieta==TRUE)
+count.i = sum(death$COUNT[(death$peri==TRUE & death$izurieta==TRUE)])
 
 # Rate difference (deaths / week)
-rd.n = (count.n / weeks.n) - (count.p / weeks.p)
+rd.n = count.n / weeks.n - count.p / weeks.p
+rd.i = count.i / weeks.i - count.p / weeks.p
 
-excess = data.frame(season=seasons, n.total=rep(NA,length(seasons)), n.weeks=rep(NA,length(seasons)))
+excess = data.frame(season=seasons, n.total=rep(NA,length(seasons)), n.weeks=rep(NA,length(seasons)), i.total=rep(NA,length(seasons)), i.weeks=rep(NA,length(seasons)))
 for (season in seasons) {
 	excess$n.weeks[excess$season==season] = nrow(death[death$peri==TRUE & death$neuzil==TRUE & death$YRSEAS==season,])
 	excess$n.total[excess$season==season] = sum(rd.n * excess$n.weeks[excess$season==season])
+	excess$i.weeks[excess$season==season] = nrow(death[death$peri==TRUE & death$izurieta==TRUE & death$YRSEAS==season,])
+	excess$i.total[excess$season==season] = sum(rd.i * excess$i.weeks[excess$season==season])
 } # for - seasons
 
 
@@ -156,10 +163,10 @@ for (season in seasons) {
 require(lattice)
 
 # Prepare the data structure
-excess.total = excess[,c("season","n.total","s.pos.total","p.pos.total")]
-methods=c("neuzil","serfling","poisson")
-methods.vector = c(rep(methods[1],length(seasons)), rep(methods[2],length(seasons)), rep(methods[3],length(seasons)))
-excess.long = data.frame(season=rep(seasons,3), method=methods.vector, deaths=rep(NA,length(seasons)*3))
+excess.total = excess[,c("season","n.total","i.total","s.pos.total","p.pos.total")]
+methods=c("neuzil","izurieta","serfling","poisson")
+methods.vector = c(rep(methods[1],length(seasons)), rep(methods[2],length(seasons)), rep(methods[3],length(seasons)), rep(methods[4],length(seasons)))
+excess.long = data.frame(season=rep(seasons,4), method=methods.vector, deaths=rep(NA,length(seasons)*4))
 for (season in seasons) {
 	for (method in methods) {
 		excess.long$deaths[excess.long$season==season & excess.long$method==method] = excess.total[excess.total==season, (which(methods==method)+1)]

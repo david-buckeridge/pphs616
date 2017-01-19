@@ -24,4 +24,4 @@ ggplot(data = plot.data, aes(x=lifeExp, y=gdpPercap, size=pop, label=country)) +
 
 
 # Same plot using regular graphics
-plot(plot.data$le, plot.data$gdp, type='p')
+plot(plot.data$lifeExp, plot.data$gdp, type='p')

@@ -16,15 +16,13 @@ library(MESS)
 nruns = 10
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
-#runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
+runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 
 # If you want to use the same sample of runs each time, save the runids and then reload
 #  them again, as opposed to generating new ids
 
 #write(runids,"runids.txt")
-
-
-runids = (read.table("runids.txt"))[,1]
+#runids = (read.table("runids.txt"))[,1]
 
 # load runs corresponding to runids
 runs = load.runs(data.dir, runids, os="mac")
