@@ -3,6 +3,7 @@
 ## ------------- Load Data -------------
 
 # Read data files as downloaded after minor cleaning
+setwd("/Users/david/GitHub/pphs616")
 death = read.csv("data/Table_S1_clean.csv")
 
 # Cast columns to correct data types
@@ -126,11 +127,11 @@ predict.data.p = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=de
 predict.data.p.noflua = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=rep(0,nrow(death)), flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
 
 # Fit the model
-poisson = glm(y ~ c + s + month + jan + flua + rsv + week, data=fit.data.p, family=poisson(link="identity"))
+poisson = glm(y ~ c + s + month + jan + flua + rsv + week, data=fit.data.p, family=poisson(link="log"))
 
 # Predict deaths for all days with and without influenza A circulating
-poisson.predict = predict(poisson, predict.data.p)
-poisson.predict.noflua = predict(poisson, predict.data.p.noflua)
+poisson.predict = predict(poisson, predict.data.p, type="response")
+poisson.predict.noflua = predict(poisson, predict.data.p.noflua, type="response")
 lines(death$DEATHDT, poisson.predict, col="orange", lty=1)
 lines(death$DEATHDT, poisson.predict.noflua, col="green", lty=1)
 
