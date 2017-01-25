@@ -58,28 +58,37 @@ death$neuzil[death$WEEK==206] = FALSE
 # Add seasonal boundaries at base of plot
 points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
 
+# Q1: Summarize distribution of weeks by summer, periseason, and season.
+
 
 ## ------------- Periseason -------------
 # Calculate excess mortality using periseason approaches
-weeks.p = sum(death$peri==TRUE & death$neuzil==FALSE)
-count.p = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE)])
+weeks.p = nrow(death[(death$peri==TRUE & death$neuzil==FALSE),])
+count.p = sum(death[(death$peri==TRUE & death$neuzil==FALSE), "COUNT"])
 
-weeks.n = sum(death$peri==TRUE & death$neuzil==TRUE)
-count.n = sum(death$COUNT[(death$peri==TRUE & death$neuzil==TRUE)])
+weeks.n = nrow(death[(death$peri==TRUE & death$neuzil==TRUE),])
+count.n = sum(death[(death$peri==TRUE & death$neuzil==TRUE), "COUNT"])
 
 
 # Rate difference (deaths / week)
 rd.n = (count.n / weeks.n) - (count.p / weeks.p)
 
+# Create empty data.frame to hold counts of excess deaths attributable to influenza in each season
 excess = data.frame(season=seasons, n.total=rep(NA,length(seasons)), n.weeks=rep(NA,length(seasons)))
+
+# Use a for loop to fill the excess data.frame with values (weeks and counts) for the periseason method
 for (season in seasons) {
 	excess$n.weeks[excess$season==season] = nrow(death[death$peri==TRUE & death$neuzil==TRUE & death$YRSEAS==season,])
 	excess$n.total[excess$season==season] = sum(rd.n * excess$n.weeks[excess$season==season])
 } # for - seasons
 
 
+# Q2: Describe the mortality attributable to influenza using the periseason method.
+
+
+
 ## ------------- Serfling -------------
-# Define variables
+# Define variables for the Serfling (and GLM) model
 t = seq(1,nrow(death))
 t2 = t^2
 t3 = t^3
@@ -87,8 +96,11 @@ c = cos(2*pi*t/52)
 s = sin(2*pi*t/52)
 
 # Censor data during circulating influenza periods for fitting model
+# - Create an empty vector to hold outcome data that will be used to fit model
 y.fit = rep(NA, length(death$COUNT))
+# - Populate the vector with values outside the influenza seasons
 y.fit[death$neuzil==FALSE | death$peri==FALSE] = death$COUNT[death$neuzil==FALSE | death$peri==FALSE]
+# - Create data frome to hold data for fitting the model
 fit.data = data.frame(y=y.fit, t=t, t2=t2, t3=t3, c=c, s=s)
 
 # Create data frame without outcome for prediction of censored weeks
@@ -104,50 +116,51 @@ serfling.predict = predict(serfling, predict.data)
 points(death$DEATHDT[death$neuzil==TRUE & death$peri==TRUE], serfling.predict[death$neuzil==TRUE & death$peri==TRUE], pch=1, cex=0.4, col="light blue")
 points(death$DEATHDT[(death$neuzil==FALSE | death$peri==FALSE)], serfling.predict[(death$neuzil==FALSE | death$peri==FALSE)], pch=16, cex=0.4, col="dark blue")
 
-# Determine excess deaths per season using Serfling model. Consider excess over all days in the season and only days the observed count is above the predicted.
+# Use a for loop to calculate the excess deaths per season based on the Serfling model and to place the values in the excess data.frame. 
+#  Consider excess on days the observed count is above the predicted.
 for (season in seasons) {
-	excess.deaths.s.pos = death$COUNT[(death$COUNT > serfling.predict & death$YRSEAS==season & death$peri==TRUE)] - 
+	excess.deaths.s = death$COUNT[(death$COUNT > serfling.predict & death$YRSEAS==season & death$peri==TRUE)] - 
 						serfling.predict[(death$COUNT > serfling.predict & death$YRSEAS==season & death$peri==TRUE)]
 	
-	excess.deaths.s.all = death$COUNT[death$YRSEAS==season & death$peri==TRUE] - serfling.predict[death$YRSEAS==season & death$peri==TRUE]
-	
-	excess$s.pos.total[excess$season==season] = sum(excess.deaths.s.pos, na.rm=TRUE)
-	excess$s.pos.weeks[excess$season==season] = length(excess.deaths.s.pos)
-	
-	excess$s.all.total[excess$season==season] = sum(excess.deaths.s.all, na.rm=TRUE)
-	excess$s.all.weeks[excess$season==season] = length(excess.deaths.s.all)
+	excess$s.total[excess$season==season] = sum(excess.deaths.s, na.rm=TRUE)
+	excess$s.weeks[excess$season==season] = length(excess.deaths.s)
 } # for
 
 
-## ------------- Poisson -------------
+# Q3: Describe the mortality attributable to influenza using the cyclical regression method.
+
+
+## ------------- GLM (Poisson) -------------
 # Define data structures
+# - Create a data.frame for fitting the model
 fit.data.p = data.frame(y=death$COUNT, c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
+# - Create a data.frame for 'predicting' deaths, really the model fit for each week
 predict.data.p = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
+# - Creater a data.frame for predicting deaths in the absence of influenza a 
 predict.data.p.noflua = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=rep(0,nrow(death)), flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
 
 # Fit the model
 poisson = glm(y ~ c + s + month + jan + flua + rsv + week, data=fit.data.p, family=poisson(link="identity"))
 
 # Predict deaths for all days with and without influenza A circulating
-poisson.predict = predict(poisson, predict.data.p)
-poisson.predict.noflua = predict(poisson, predict.data.p.noflua)
+poisson.predict = predict(poisson, predict.data.p, type="response")
+poisson.predict.noflua = predict(poisson, predict.data.p.noflua, type="response")
+
+# Plot the fit and predicted values
 lines(death$DEATHDT, poisson.predict, col="orange", lty=1)
 lines(death$DEATHDT, poisson.predict.noflua, col="green", lty=1)
 
-# Determine excess deaths per season using Poisson model. 
+# Use a for loop to calculate the excess deaths per season using Poisson model and assign the values to the excess data.frame. 
 for (season in seasons) {
-	excess.deaths.p.pos = death$COUNT[(death$COUNT > poisson.predict.noflua & death$YRSEAS==season & death$peri==TRUE)] - 
+	excess.deaths.p = death$COUNT[(death$COUNT > poisson.predict.noflua & death$YRSEAS==season & death$peri==TRUE)] - 
 						poisson.predict.noflua[(death$COUNT > poisson.predict.noflua & death$YRSEAS==season & death$peri==TRUE)]
 	
-	excess.deaths.p.all = death$COUNT[death$YRSEAS==season & death$peri==TRUE] - poisson.predict.noflua[death$YRSEAS==season & death$peri==TRUE]
-		
-	excess$p.pos.total[excess$season==season] = sum(excess.deaths.p.pos, na.rm=TRUE)
-	excess$p.pos.weeks[excess$season==season] = length(excess.deaths.p.pos)
-	
-	excess$p.all.total[excess$season==season] = sum(excess.deaths.p.all, na.rm=TRUE)
-	excess$p.all.weeks[excess$season==season] = length(excess.deaths.p.all)
-
+	excess$p.total[excess$season==season] = sum(excess.deaths.p, na.rm=TRUE)
+	excess$p.weeks[excess$season==season] = length(excess.deaths.p)
 } # for
+
+
+# Q4: Describe the mortality attributable to influenza using the GLM method.
 
 
 ## ------------- Plot Excess Deaths by Method -------------
@@ -156,7 +169,7 @@ for (season in seasons) {
 require(lattice)
 
 # Prepare the data structure
-excess.total = excess[,c("season","n.total","s.pos.total","p.pos.total")]
+excess.total = excess[,c("season","n.total","s.total","p.total")]
 methods=c("neuzil","serfling","poisson")
 methods.vector = c(rep(methods[1],length(seasons)), rep(methods[2],length(seasons)), rep(methods[3],length(seasons)))
 excess.long = data.frame(season=rep(seasons,3), method=methods.vector, deaths=rep(NA,length(seasons)*3))
@@ -169,3 +182,4 @@ for (season in seasons) {
 # Draw the plot
 bwplot(deaths ~ method, data=excess.long, horizontal=FALSE)
 
+# Q5: Which method would you recommend and why?
