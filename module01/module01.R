@@ -60,6 +60,21 @@ points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
 
 # Q1: Summarize distribution of weeks by summer, periseason, and season.
 
+weeks = data.frame(season=seasons, s.weeks=rep(NA,length(seasons)), p.weeks=rep(NA,length(seasons)), n.weeks=rep(NA,length(seasons)))
+
+for (season in seasons) {
+  n.weeks = nrow(death[death$neuzil==TRUE & death$YRSEAS==season,])
+  p.weeks = nrow(death[death$neuzil==FALSE & death$peri==TRUE & death$YRSEAS==season,])
+  s.weeks = nrow(death[death$neuzil==FALSE & death$peri==FALSE & death$YRSEAS==season,])
+  
+  
+  weeks$n.weeks[weeks$season==season] = n.weeks
+  weeks$p.weeks[weeks$season==season] = p.weeks
+  weeks$s.weeks[weeks$season==season] = s.weeks
+}
+
+
+
 ## ------------- Periseason -------------
 # Calculate excess mortality using periseason approaches
 weeks.p = nrow(death[(death$peri==TRUE & death$neuzil==FALSE),])
