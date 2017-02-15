@@ -1,5 +1,6 @@
 # ------------- Identify Data ------------
 # define locations of data and key file mapping run ids to simulation scenarios
+setwd('/Users/davidbuckeridge/GitHub/pphs616')
 data.dir = "data/surveillance_subset_noBWA_100samples/"
 key.filename = "data/key.csv"
 
