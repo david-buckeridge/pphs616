@@ -1,7 +1,7 @@
 # ------------- Identify Data ------------
 # define locations of data and key file mapping run ids to simulation scenarios
 setwd('/Users/davidbuckeridge/GitHub/pphs616')
-data.dir = "data/surveillance_subset_noBWA_100samples/"
+data.dir = "data/surveillance_subset_noBWA_100samples"
 key.filename = "data/key.csv"
 
 # load functions
@@ -26,7 +26,8 @@ runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 #runids = (read.table("runids.txt"))[,1]
 
 # load runs corresponding to runids
-runs = load.runs(data.dir, runids, os="mac")
+# runs = load.runs(data.dir, runids, os="mac")
+runs = load.runs.better(data.dir, runids, os="mac")
 
 
 
