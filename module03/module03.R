@@ -6,7 +6,7 @@ library(classInt)
 library(RColorBrewer)
 
 # define path to data
-setwd("/Users/davidbuckeridge/GitHub/pphs616")
+setwd("/Users/david/GitHub/pphs616")
 
 fsa.shp.name = "data/Montreal_FSA_2001/Montreal_FSA_Census_2001_MTM"
 fsa.visit.name = "data/montreal_ili_visits.csv"
@@ -66,23 +66,30 @@ ili = merge(fsa.visits, ili, by='fsa')
 # divide 3-year counts by 3 to approximate an annual rate
 ili$rate = (ili$visits / 3) / ili$pop
 
-nclr = 5
-plotclr = brewer.pal(nclr, 'Reds')
-class.crude = classIntervals((ili$rate*1000), nclr, style='quantile', dataPrecision=0)
-colcode.crude = findColours(class.crude, plotclr)
+# Plot map with four different levels of grouping of outcome
+groups = c(3,5,7,9)
+par(mfrow=c(2,2))
 
-plot(fsa.shp)
-plot(fsa.shp, col=colcode.crude, add=T)
-title(sub="Crude Rates of ILI Visits by FSA (Annual Visits per 1,000)")
-legend('topleft', legend=names(attr(colcode.crude, "table")), fill=attr(colcode.crude,"palette"), cex=0.9, bty='n')
+for (group in groups) {
 
+  plotclr = brewer.pal(nclr, 'Reds')
+  class.crude = classIntervals((ili$rate*1000), group, style='quantile', dataPrecision=0)
+  colcode.crude = findColours(class.crude, plotclr)
+
+  plot(fsa.shp)
+  plot(fsa.shp, col=colcode.crude, add=T)
+  title(sub="Crude Rates of ILI Visits by FSA (Annual Visits per 1,000)")
+  legend('topleft', legend=names(attr(colcode.crude, "table")), fill=attr(colcode.crude,"palette"), cex=0.9, bty='n')
+} # for - levels
+  
+par(mfrow=c(1,1))
 
 
 ## 3. Build a connectivity matrix
 # Use triangulation to build connectivity
 fsa.nb.tri = tri2nb(coordinates(fsa.shp), row.names=fsa.shp@data$FSA)
 summary(fsa.nb.tri)
-# What are the least and most connected regions? Verify these regions on the map, does they make sense?
+# What are the least and most connected regions? Verify these regions on the map, do they make sense?
 
 plot(fsa.shp, border='darkgrey', las=1, main='Connectivity by Triangulation')
 plot(fsa.nb.tri, coordinates(fsa.shp), add=TRUE)
@@ -120,67 +127,71 @@ plot(fsa.nb.poly, coordinates(fsa.shp), add=TRUE)
 
 ## 4. Smooth Rates
 
-ili.ebe = EBlocal(ili$visits/3, ili$pop, fsa.nb)
+ili.ebe = EBlocal(ili$visits/(3*52), ili$pop, fsa.nb)
 ili.ebe[1:10,]
 
 nclr = 5
 plotclr = brewer.pal(nclr, 'Reds')
-class.raw = classIntervals(round(ili.ebe$raw*1000,0), nclr, style='quantile')
+class.raw = classIntervals(round(ili.ebe$raw*10000,0), nclr, style='quantile')
 # Note that we take the breaks from the crude rate map and pass them to the 
-#  smoothed rates map so that we have the same class boundaries
-class.est = classIntervals(round(ili.ebe$est*1000,0), n=nclr, style='fixed',
+#  smoothed rates map so that we have the same class boundaries for both maps
+class.est = classIntervals(round(ili.ebe$est*10000,0), n=nclr, style='fixed',
                            fixedBreaks=class.raw$brks)
 
 colcode.raw = findColours(class.raw, plotclr)
 colcode.est = findColours(class.est, plotclr)
 
+par(mfrow=c(1,2))
+
 plot(fsa.shp)
 plot(fsa.shp, col=colcode.raw, add=T)
-title(sub="Raw Rates of ILI Visits (Annual Visits per 1,000)")
+title(sub="Raw Rates of ILI Visits (Weekly Visits per 10,000)")
 legend('topleft', legend=names(attr(colcode.raw, "table")), fill=attr(colcode.raw,"palette"), cex=0.9, bty='n')
 
 plot(fsa.shp)
 plot(fsa.shp, col=colcode.est, add=T)
-title(sub="EBE (Local) Smoothed Rates of ILI Visits (Annual Visits per 1,000)")
+title(sub="EBE (Local) Smoothed Rates of ILI Visits (Weekly Visits per 10,000)")
 legend('topleft', legend=names(attr(colcode.est, "table")), fill=attr(colcode.est,"palette"), cex=0.9, bty='n')
+
+par(mfrow=c(1,1))
 
 
 ## 5. Estimate Moran's I
 # examine and transform data as needed
 hist(ili.ebe$raw)
 hist(sqrt(ili.ebe$raw))
-hist(fsa.shp@data$Median_Fam)
 
 # create row-standardized weight matrix
 fsa.w = nb2listw(fsa.nb)
 #str(fsa.w)
 
 (ili.moran = moran.test(sqrt(ili.ebe$raw), fsa.w))
-(income.moran = moran.test(fsa.shp@data$Median_Fam, fsa.w))
-
 moran.plot(sqrt(ili.ebe$raw), fsa.w, labels=fsa.visits$fsa)
-moran.plot(fsa.shp@data$Median_Fam, fsa.w, labels=fsa.visits$fsa)
 
 
-# plot local Moran's I values
+# plot local Moran's I values and compare to raw values
 ili.moran.local = localmoran(sqrt(ili.ebe$raw), fsa.w)
-income.moran.local = localmoran(fsa.shp@data$Median_Fam, fsa.w)
 
 nclr = 5
 plotclr = brewer.pal(nclr, 'Reds')
 class.ili = classIntervals(ili.moran.local[,1], nclr, style='quantile')
-class.income = classIntervals(income.moran.local[,1], nclr, style='quantile')
 
 colcode.ili = findColours(class.ili, plotclr)
-colcode.income = findColours(class.income, plotclr)
 
+par(mfrow=c(1,2))
+
+class.crude = classIntervals((ili$rate*1000), nclr, style='quantile', dataPrecision=0)
+colcode.crude = findColours(class.crude, plotclr)
+
+plot(fsa.shp)
+plot(fsa.shp, col=colcode.crude, add=T)
+title(sub="Crude Rates of ILI Visits by FSA (Annual Visits per 1,000)")
+legend('topleft', legend=names(attr(colcode.crude, "table")), fill=attr(colcode.crude,"palette"), cex=0.9, bty='n')
 
 plot(fsa.shp)
 plot(fsa.shp, col=colcode.ili, add=T)
 title(sub="Local Moran's I for ILI")
 legend('topleft', legend=names(attr(colcode.ili, "table")), fill=attr(colcode.ili,"palette"), cex=0.9, bty='n')
 
-plot(fsa.shp)
-plot(fsa.shp, col=colcode.income, add=T)
-title(sub="Local Moran's I for Income")
-legend('topleft', legend=names(attr(colcode.income, "table")), fill=attr(colcode.income,"palette"), cex=0.9, bty='n')
+par(mfrow=c(1,1))
+
