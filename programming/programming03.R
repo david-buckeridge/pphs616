@@ -68,7 +68,7 @@ countries = unique(gapminder$country)
 le.80.for.country = rep(NA, length(countries))
 # Create an indexing variable that will keep track of the 
 #  number of countries identified to ensure that the next
-#  one identified is place in the correct location of the
+#  one identified is placed in the correct location of the
 #  vector.
 insert = 1
 
