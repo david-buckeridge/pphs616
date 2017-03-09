@@ -1,6 +1,7 @@
 # ------------- Identify Data ------------
 # define locations of data and key file mapping run ids to simulation scenarios
-data.dir = "data/surveillance_subset_noBWA_100samples/"
+setwd('/Users/davidbuckeridge/GitHub/pphs616')
+data.dir = "data/surveillance_subset_noBWA_100samples"
 key.filename = "data/key.csv"
 
 # load functions
@@ -13,7 +14,7 @@ library(MESS)
 
 # Set this number low for initial attempts, then use all the runs (at the indicated
 #  concentration and duration) to answer the questions.
-nruns = 10
+nruns = 100
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
 runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
@@ -25,7 +26,8 @@ runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 #runids = (read.table("runids.txt"))[,1]
 
 # load runs corresponding to runids
-runs = load.runs(data.dir, runids, os="mac")
+# runs = load.runs(data.dir, runids, os="mac")
+runs = load.runs.better(data.dir, runids, os="mac")
 
 
 
@@ -37,7 +39,7 @@ outbreaks = lapply(runs, o.summary)
 # Plot distribution of outbreak by maximum height and duration
 par(mfrow=c(1,2))
 hist(unlist(sapply(outbreaks, "[", "height")), xlab="Maximum Height (Daily Visits)", main="Maximum Height")
-hist(unlist(sapply(outbreaks, "[", "length")), xlab="Duration (Hours)", main="Duration")
+hist(unlist(sapply(outbreaks, "[", "length")), xlab="Duration (Days)", main="Duration")
 par(mfrow=c(1,1))
 
 
