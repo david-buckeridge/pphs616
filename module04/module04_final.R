@@ -6,10 +6,10 @@ library(sqldf)
 
 
 ## ------------- Read Files -------------
-setwd("/Users/davidbuckeridge/GitHub/pphs616")
-hospital_discharges <- read.csv('data/hospital_discharges.csv')
-physician_services <- read.csv('data/physician_services.csv')
-sampled_patients <- read.csv('data/sampled_patients.csv')
+setwd("/Users/david/GitHub/pphs616")
+hospital_discharges = read.csv('data/hospital_discharges.csv')
+physician_services = read.csv('data/physician_services.csv')
+sampled_patients = read.csv('data/sampled_patients.csv')
 
 hospital_discharges$admit = as.Date(hospital_discharges$admit)
 hospital_discharges$discharge = as.Date(hospital_discharges$discharge)
@@ -29,6 +29,8 @@ sampled_patients$dob = as.Date(paste(as.character(sampled_patients$dob), "-01", 
 
 
 # Step 1 - Identify people with hospital admission for diabetes
+#        - We take the date of first admission only, so there will be only one row for each person
+#        - Ranges of ICD9 and ICD10 codes are given to account for the change in coding
 hospital_diag = 
   sqldf("SELECT anon_id, min(admit) AS diab_date 
          FROM hospital_discharges 
@@ -41,6 +43,8 @@ hospital_diag =
          GROUP BY anon_id")
 
 
+#        - Here we are identifying all hospitalization events for diabetes, so there will be multiple
+#          rows for a person if they had multiple admissions
 hospital_diag_events = 
   sqldf("SELECT anon_id, admit AS diab_date 
         FROM hospital_discharges 
@@ -53,7 +57,7 @@ hospital_diag_events =
 
 
 
-# When was ICD-10 first used for coding hospital discharges?
+# Question 1 - When was ICD-10 first used for coding hospital discharges?
 
 first.admit = as.Date(
   sqldf("SELECT min(admit)
@@ -83,6 +87,7 @@ nrow(hospital_diag_events)/ nrow(sampled_patients) # mix
 
 
 # Compare rates before and after ICD-10
+# Rates before...
 hospital_diag_preICD10 = 
   sqldf("SELECT anon_id, discharge
           FROM hospital_discharges
@@ -96,10 +101,10 @@ hospital_discharge_count_preICD10 =
           WHERE icd_type='ICD-9' 
         ")[1,1]  
 
-
 nrow(hospital_diag_preICD10) / hospital_discharge_count_preICD10
 
-#    including date limit results in no cases...     AND discharge >= '2006-04-02'
+
+# Rates after...
 hospital_diag_postICD10 = 
   sqldf("SELECT anon_id, discharge
         FROM hospital_discharges
@@ -111,7 +116,6 @@ hospital_diag_postICD10 =
              icd LIKE 'E14%')
         ")
 
-#   including date limit results in no count...      AND discharge >= '2006-04-02'
 hospital_discharge_count_postICD10 =
   sqldf("SELECT COUNT(*)
         FROM hospital_discharges
@@ -120,16 +124,15 @@ hospital_discharge_count_postICD10 =
                             
 nrow(hospital_diag_postICD10) / hospital_discharge_count_postICD10
 
+
+
 # Step 2 - Identify physician billing events for diabetes
 phys_diab = 
   sqldf("SELECT anon_id, date 
          FROM physician_services 
          WHERE icd LIKE '250%'")
 
-
-
 # Physician consulation rate
-
 phys_diab_unique = 
   sqldf("SELECT DISTINCT anon_id
          FROM physician_services
@@ -172,6 +175,7 @@ diab_dates =
 
 nrow(diab_dates) / nrow(sampled_patients)
 
+# determine rates by age...
 diab_dates_age =
   sqldf("SELECT x.anon_id, diab_date, dob, sex
          FROM diab_dates x, sampled_patients y
