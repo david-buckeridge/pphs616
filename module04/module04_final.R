@@ -1,10 +1,12 @@
 ## ------------- Set Directory -------------
 
 # load libraries
+options(gsubfn.engine = "R")
 library(sqldf)
 
 
 ## ------------- Read Files -------------
+setwd("/Users/davidbuckeridge/GitHub/pphs616")
 hospital_discharges <- read.csv('data/hospital_discharges.csv')
 physician_services <- read.csv('data/physician_services.csv')
 sampled_patients <- read.csv('data/sampled_patients.csv')

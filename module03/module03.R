@@ -6,7 +6,7 @@ library(classInt)
 library(RColorBrewer)
 
 # define path to data
-setwd("/Users/david/GitHub/pphs616")
+setwd("/Users/davidbuckeridge/GitHub/pphs616")
 
 fsa.shp.name = "data/Montreal_FSA_2001/Montreal_FSA_Census_2001_MTM"
 fsa.visit.name = "data/montreal_ili_visits.csv"
