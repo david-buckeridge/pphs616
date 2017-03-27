@@ -58,51 +58,20 @@ hospital_diag_events =
 
 
 # Question 1a - What proportion of all subjects had at least one admission for diabetes (R)?
-nrow(hospital_diag) / nrow(sampled_patients) # people
+
 
 # Question 1b - Plot the frequency distribution of the number of hospitalizations per person for diabetes (SQL + R). 
 # Hint: This is easy if you perform another SQL query very similar to the one for hospital_diag...
-hist( 
-  sqldf("SELECT anon_id, count(admit) AS diab_count 
-        FROM hospital_discharges 
-        WHERE (icd_type='ICD-9'  AND icd LIKE '250%')
-        OR (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
-        icd LIKE 'E11%' OR
-        icd LIKE 'E12%' OR
-        icd LIKE 'E13%' OR
-        icd LIKE 'E14%'))
-        GROUP BY anon_id")[,2],
-    main="Frequency of Hospital Admission for Diabetes", xlab="Number of Admissions")
 
 
 # Question 1c - What proportion of all hospital admissions were for diabetes (R)?
-nrow(hospital_diag_events) / nrow(hospital_discharges) # events
+
 
 # Question 1d - When was ICD-10 first used for coding hospital discharges (SQL)?
 
-first.admit = as.Date(
-  sqldf("SELECT min(admit)
-         FROM hospital_discharges
-         WHERE (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
-                                       icd LIKE 'E11%' OR
-                                       icd LIKE 'E12%' OR
-                                       icd LIKE 'E13%' OR
-                                       icd LIKE 'E14%'))")[1,1],
-              origin="1970-01-01")
-
-first.discharge = as.Date(
-  sqldf("SELECT min(discharge)
-         FROM hospital_discharges
-         WHERE (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
-                                       icd LIKE 'E11%' OR
-                                       icd LIKE 'E12%' OR
-                                       icd LIKE 'E13%' OR
-                                       icd LIKE 'E14%'))")[1,1],  
-              origin="1970-01-01")
 
 
-
-# Question 1e - Compare rates before and after ICD-10 was first used
+# Question 1e - Compare the proportion of hospital admissions that were for diabetes before and after the switch to ICD-10 (SQL + R).
 # Rates before...
 hospital_diag_preICD10 = 
   sqldf("SELECT anon_id, discharge
@@ -121,24 +90,7 @@ nrow(hospital_diag_preICD10) / hospital_discharge_count_preICD10
 
 
 # Rates after...
-hospital_diag_postICD10 = 
-  sqldf("SELECT anon_id, discharge
-        FROM hospital_discharges
-        WHERE icd_type='ICD-10' 
-        AND (icd LIKE 'E10%' OR
-             icd LIKE 'E11%' OR
-             icd LIKE 'E12%' OR
-             icd LIKE 'E13%' OR
-             icd LIKE 'E14%')
-        ")
 
-hospital_discharge_count_postICD10 =
-  sqldf("SELECT COUNT(*)
-        FROM hospital_discharges
-        WHERE icd_type='ICD-10' 
-        ")[1,1]  
-                            
-nrow(hospital_diag_postICD10) / hospital_discharge_count_postICD10
 
 
 
@@ -155,19 +107,13 @@ phys_diab_unique =
          WHERE icd LIKE '250%'")
 
 # Question 2a - What proportion of all subjects had at least one physician visit for diabetes (R)?
-nrow(phys_diab_unique) / nrow(sampled_patients)
+
 
 # Question 2b - Plot the frequency distribution of physician visits per person for diabetes (SQL + R).
-hist(
-      sqldf("SELECT anon_id, count(anon_id)
-             FROM physician_services
-             WHERE icd like '250%'
-             GROUP BY anon_id")[,2],
-     main="Frequency of Physician Visits for Diabetes", xlab="Number of Visits")
+
 
 
 # Question 2c - What proportion of all physician visits were for diabetes (R)?
-nrow(phys_diab) / nrow(physician_services)
 
 
 
@@ -181,19 +127,11 @@ phys_diag =
          GROUP BY x.anon_id") 
 
 # Question 3a - What proportion of subjects had two visits for diabetes within 730 days?
-nrow(phys_diag) / nrow(sampled_patients)
+
 
 # Question 3b - Plot the proportion of subjects that would be identified in 3a as a function of the cutoff ranging from 0 to 730 days. 
 #               Do you think 730 days is a reasonable cut-off? Explain.
-cutoffs = seq(0,730,30)
-sensitivity = rep(NA, length(cutoffs))
 
-for (cutoff in cutoffs) {
-  sensitivity[which(cutoffs==cutoff)] = nrow(phys_diag[phys_diag$interval <= cutoff,]) / nrow(phys_diag)
-}
-
-plot(cutoffs, sensitivity, type='s', col="red",
-     main="Proportion of Subjects Detected by Length of Follow-up", xlab="Maximum Length between Visits", ylab="Proportion")
 
 
 # Step 4 - Join cases detected through physician billing with those detected from hospital discharges.
@@ -214,7 +152,7 @@ diab_dates =
 # Question 4a - What proportion of subjects met the case definition for diabetes of either one hospital admission
 #               or two physician visits within 730 days (R)?
 
-nrow(diab_dates) / nrow(sampled_patients)
+
 
 
 # Question 4b - Create a Venn diagram (the areas does not need to perfectly reflect the proportions) to 
@@ -227,19 +165,6 @@ nrow(diab_dates) / nrow(sampled_patients)
 # Question 4c - Calculate the proportion of subjects that meet the cased definition stratified by age
 #               (44 and under, 45 to 64, 65 and over) and sex (male, female) stratified rates. (Hint - you will need to join to the patients table) (SQL + R).
 
-diab_dates_age =
-  sqldf("SELECT x.anon_id, diab_date, dob, sex
-         FROM diab_dates x, sampled_patients y
-         WHERE x.anon_id = y.anon_id")
-
-
-# Get numerator. Calculate age at diagnosis
-diab_dates_age$age_dx = as.numeric(as.Date(diab_dates_age$diab_date, origin="1970-01-01") - diab_dates_age$dob) / 365.25
-diab.under45 = nrow(diab_dates_age[diab_dates_age$age.dx < 45,])
-diab.45to64 = nrow(diab_dates_age[diab_dates_age$age.dx < 45,])
-
-
-# Get denominator. Calculate age at midpoint (2002-01-01)
 
 
 
