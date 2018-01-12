@@ -3,10 +3,7 @@
 
 # Declare and load libraries
 library(ggplot2)
-
-# Load the gapminder date set from https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv
-data.url = "https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv"
-gapminder = read.csv(data.url)
+library(gapminder)
 
 # Compute mean Life Expectancy and GDP by Country
 ## Using aggregate with formula notation
