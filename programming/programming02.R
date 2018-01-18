@@ -3,13 +3,11 @@
 
 # Load libraries
 library(ggplot2)
+library(gapminder)
 
 # Load functions
+setwd("/Users/david/GitHub/pphs616")
 source("functions/programming.functions.R")
-
-# Load the gapminder date set
-data.url = "https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv"
-gapminder = read.csv(data.url)
 
 # Compute mean Life Expectancy and GDP by Country
 ## First, create data frame with country names and continent
