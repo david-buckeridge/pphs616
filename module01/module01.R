@@ -88,8 +88,11 @@ c = cos(2*pi*t/52)
 s = sin(2*pi*t/52)
 
 # Censor data during circulating influenza periods for fitting model
+# - Create an empty vector to hold outcome data that will be used to fit model
 y.fit = rep(NA, length(death$COUNT))
+# - Populate the vector with values outside the influenza seasons
 y.fit[death$neuzil==FALSE | death$peri==FALSE] = death$COUNT[death$neuzil==FALSE | death$peri==FALSE]
+# - Create data frome to hold data for fitting the model
 fit.data = data.frame(y=y.fit, t=t, t2=t2, t3=t3, c=c, s=s)
 
 # Create data frame without outcome for prediction of censored weeks
@@ -120,10 +123,13 @@ for (season in seasons) {
 } # for
 
 
-## ------------- Poisson -------------
+## ------------- GLM (Poisson) -------------
 # Define data structures
+# - Create a data.frame for fitting the model
 fit.data.p = data.frame(y=death$COUNT, c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
+# - Create a data.frame for 'predicting' deaths, really the model fit for each week
 predict.data.p = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
+# - Create a data.frame for predicting deaths in the absence of influenza a 
 predict.data.p.noflua = data.frame(c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=rep(0,nrow(death)), flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
 
 # Fit the model
@@ -132,6 +138,8 @@ poisson = glm(y ~ c + s + month + jan + flua + rsv + week, data=fit.data.p, fami
 # Predict deaths for all days with and without influenza A circulating
 poisson.predict = predict(poisson, predict.data.p, type="response")
 poisson.predict.noflua = predict(poisson, predict.data.p.noflua, type="response")
+
+# Plot the fit and predicted values
 lines(death$DEATHDT, poisson.predict, col="orange", lty=1)
 lines(death$DEATHDT, poisson.predict.noflua, col="green", lty=1)
 
