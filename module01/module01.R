@@ -123,6 +123,7 @@ for (season in seasons) {
 } # for
 
 
+## ------------- GLM (Poisson) -------------
 # Define data structures
 # - Create a data.frame for fitting the model
 fit.data.p = data.frame(y=death$COUNT, c=c, s=s, month=death$MONTH, jan=death$JAN1, flua=death$FLUA, flub=death$FLUB, rsv=death$RSVPOS, week=death$WEEK)
