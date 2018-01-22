@@ -3,6 +3,7 @@
 ## ------------- Load Data -------------
 
 # Read data files as downloaded after minor cleaning
+# setwd("...")
 death = read.csv("data/Table_S1_clean.csv")
 
 # Cast columns to correct data types
@@ -63,11 +64,11 @@ points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
 
 ## ------------- Periseason -------------
 # Calculate excess mortality using periseason approaches
-weeks.p = nrow(death[(death$peri==TRUE & death$neuzil==FALSE),])
-count.p = sum(death[(death$peri==TRUE & death$neuzil==FALSE), "COUNT"])
+weeks.p = sum(death$peri==TRUE & death$neuzil==FALSE)
+count.p = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE)])
 
-weeks.n = nrow(death[(death$peri==TRUE & death$neuzil==TRUE),])
-count.n = sum(death[(death$peri==TRUE & death$neuzil==TRUE), "COUNT"])
+weeks.n = sum(death$peri==TRUE & death$neuzil==TRUE)
+count.n = sum(death$COUNT[(death$peri==TRUE & death$neuzil==TRUE)])
 
 
 # Rate difference (deaths / week)

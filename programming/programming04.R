@@ -1,6 +1,5 @@
 ## 1. Load Data
-data.url = "https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv"
-gapminder = read.csv(data.url)
+library(gapminder)
 
 ### ---- Functions -----
 # Obtain list of countries
