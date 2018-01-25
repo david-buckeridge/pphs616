@@ -40,6 +40,14 @@ sts <- sim.pointSource(p = 0.99, r = 0.5, length = 400,
 plot(sts)
 
 
+# simulate 10 series
+ten <- lapply(1:10, function(x) {
+  sim.pointSource(p = 0.975, r = 0.5, length = 400,
+                  A = 1, alpha = 1, beta = 0, phi = 0,
+                  frequency = 1, state = NULL, K = 1.7)
+})
+
+
 
 # Declare algorithms to apply and set their parameters 
 control = list(
@@ -56,20 +64,14 @@ control = list(
 control = lapply(control,function(ctrl) {
      ctrl$range = 300:400; return(ctrl)})
 
+
 # compare performance of algorithms for single sts
 algo.compare(algo.call(sts2disProg(flu.sts), control = control))
 
 
-# simulate 10 series
-ten <- lapply(1:10, function(x) {
-      sim.pointSource(p = 0.975, r = 0.5, length = 400,
-                      A = 1, alpha = 1, beta = 0, phi = 0,
-                      frequency = 1, state = NULL, K = 1.7)
-  })
-
 # apply to all 10 series, with results as list
 ten.surv <- lapply(ten, function(ts) {
      algo.compare(algo.call(ts, control=control)) })
-  
+
 #Average results
 algo.summary(ten.surv)
