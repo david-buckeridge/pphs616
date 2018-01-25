@@ -31,7 +31,7 @@ get.runids <- function(key.filename, concentration, duration, n) {
 #  input: directory is the realtive path to the datafiles, runids is a vector
 #         of runids to load.
 #  output: a list of data.frames contain data for inidcated runs
-load.runs <- function(directory, runids, os="mac") {
+load.runs.old <- function(directory, runids, os="mac") {
 	
 	if (os == "mac") parse = 43
 	else parse = 39
@@ -41,14 +41,14 @@ load.runs <- function(directory, runids, os="mac") {
 	filenames.toread = filenames[substr(filenames, parse, nchar(filenames)-4) %in% runids]
 
 	return(lapply(filenames.toread, read.csv))
-} # load.runs
+} # load.runs.old
 
 
 # load the runs for the indicated ids without having to rely on directory structure
 #  input: directory is the realtive path to the datafiles, runids is a vector
 #         of runids to load.
 #  output: a list of data.frames contain data for inidcated runs
-load.runs.better <- function(directory, runids, os="mac") {
+load.runs <- function(directory, runids, os="mac") {
   
   if (os == "mac") seperator = "/"
   else seperator = "\\"
@@ -64,7 +64,7 @@ load.runs.better <- function(directory, runids, os="mac") {
   filenames.toread = filenames[filenames.tocheck %in% runids]
 
   return(lapply(filenames.toread, read.csv))
-} # load.runs.better
+} # load.runs
 
 
 # calculate summary information on outbreak 

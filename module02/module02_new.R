@@ -1,7 +1,18 @@
+# ------------- Identify Data ------------
+# define locations of data and key file mapping run ids to simulation scenarios
+setwd('/Users/davidbuckeridge/GitHub/pphs616')
+data.dir = "data/surveillance_subset_noBWA_100samples"
+key.filename = "data/key.csv"
+
+# load functions
+source("functions/outbreak.functions.R")
+
+# load libraries
 library(surveillance)
+#library(MESS)
 
-# introduce ts and sts objects
 
+## ------------- Apply One Method to One Real Weekly Time Series --------
 
 # read a single time series and create a sts object
 flu = read.csv("data/Table_S1_clean.csv")
@@ -28,17 +39,25 @@ length(flu$COUNT)
 
 
 # apply algorithm and identify outbreak
+# compare performance of algorithms for single sts
+algo.compare(algo.call(sts2disProg(flu.sts), control = control))
 
-# interpret results
+
+
+
+## ------------- Apply One Method to One Simulated Weekly Time Series --------
 
 
 # simulate a time series
 sts <- sim.pointSource(p = 0.99, r = 0.5, length = 400,
-                      A = 1, alpha = 1, beta = 0, phi = 0,
+                       A = 1, alpha = 1, beta = 0, phi = 0,
                        frequency = 1, state = NULL, K = 1.7)
 
 plot(sts)
 
+
+
+## ------------- Apply Many Methods to Many Simulated Weekly Time Series --------
 
 # simulate 10 series
 ten <- lapply(1:10, function(x) {
@@ -48,30 +67,69 @@ ten <- lapply(1:10, function(x) {
 })
 
 
-
 # Declare algorithms to apply and set their parameters 
 control = list(
-     list(funcName = "rki1"),
-     list(funcName = "rki2"),
-     list(funcName = "rki3"),
-     list(funcName = "bayes1"),
-     list(funcName = "bayes2"),
-     list(funcName = "bayes3"),
-     list(funcName = "cdc",alpha=0.05),
-     list(funcName = "farrington",alpha=0.05))
+  list(funcName = "rki1"),
+  list(funcName = "rki2"),
+  list(funcName = "rki3"),
+  list(funcName = "bayes1"),
+  list(funcName = "bayes2"),
+  list(funcName = "bayes3"),
+  list(funcName = "cdc",alpha=0.05),
+  list(funcName = "farrington",alpha=0.05))
 
 # define interval in sts for surveillance
 control = lapply(control,function(ctrl) {
-     ctrl$range = 300:400; return(ctrl)})
-
-
-# compare performance of algorithms for single sts
-algo.compare(algo.call(sts2disProg(flu.sts), control = control))
+  ctrl$range = 300:400; return(ctrl)})
 
 
 # apply to all 10 series, with results as list
 ten.surv <- lapply(ten, function(ts) {
-     algo.compare(algo.call(ts, control=control)) })
+  algo.compare(algo.call(ts, control=control)) })
 
 #Average results
 algo.summary(ten.surv)
+
+
+## ------------- Apply Many Methods to Many Simulated Daily Time Series --------
+
+## ------------- Read Files -------------
+
+# Set this number low for initial attempts, then use all the runs (at the indicated
+#  concentration and duration) to answer the questions.
+nruns = 100
+
+# Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
+runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
+
+# If you want to use the same sample of runs each time, save the runids and then reload
+#  them again, as opposed to generating new ids
+
+#write(runids,"runids.txt")
+#runids = (read.table("runids.txt"))[,1]
+
+# load runs corresponding to runids
+# runs = load.runs(data.dir, runids, os="mac")
+runs = load.runs(data.dir, runids, os="mac")
+
+
+
+## ------------- Describe Outbreaks -------------
+
+# Calculate summary outbreak information and truth vectors for runs
+outbreaks = lapply(runs, o.summary)
+
+# Plot distribution of outbreak by maximum height and duration
+par(mfrow=c(1,2))
+hist(unlist(sapply(outbreaks, "[", "height")), xlab="Maximum Height (Daily Visits)", main="Maximum Height")
+hist(unlist(sapply(outbreaks, "[", "length")), xlab="Duration (Days)", main="Duration")
+par(mfrow=c(1,1))
+
+
+
+# Convert to STS objects with daily (and with weekly?)
+
+
+
+
+
