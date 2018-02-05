@@ -12,6 +12,59 @@ library(surveillance)
 #library(MESS)
 
 
+## ------------- Read Simulated Outbreaks -------------
+
+# Set this number low for initial attempts, then use all the runs (at the indicated
+#  concentration and duration) to answer the questions.
+nruns = 10
+
+# Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
+runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
+
+# If you want to use the same sample of runs each time, save the runids and then reload
+#  them again, as opposed to generating new ids
+
+#write(runids,"runids.txt")
+#runids = (read.table("runids.txt"))[,1]
+
+# load runs corresponding to runids
+# runs = load.runs(data.dir, runids, os="mac")
+runs = load.runs(data.dir, runids, os="mac")
+
+
+
+## ------------- Describe Outbreaks -------------
+
+# Calculate summary outbreak information and truth vectors for runs
+outbreaks = lapply(runs, o.summary)
+
+# Plot distribution of outbreak by maximum height and duration
+par(mfrow=c(1,2))
+hist(unlist(sapply(outbreaks, "[", "height")), xlab="Maximum Height (Daily Visits)", main="Maximum Height")
+hist(unlist(sapply(outbreaks, "[", "length")), xlab="Duration (Days)", main="Duration")
+par(mfrow=c(1,1))
+
+
+# Create a sts object from a simulated run
+a.run = runs[[1]]
+a.outbreak = outbreaks[[1]]
+
+a.sts = sts(observed=a.run$baseline.outbreak_count,
+            start=c(as.numeric(strftime(a.run$date[1], "%Y")), 
+                    as.numeric(strftime(a.run$date[1], "%j"))),
+            frequency=365,
+            state=(a.run$baseline.outbreak_count > a.run$baseline_count))
+
+
+outbreak.year <- which(isoWeekYear(as.Date(a.run$date))$ISOYear == isoWeekYear(a.outbreak$start)$ISOYear)
+
+control = list(range = outbreak.year, method="C1", alpha=0.05)
+surv = earsC(a.sts, control=control)
+plot(surv)
+summary(surv)
+
+
+
 ## ------------- Apply One Method to One Real Weekly Time Series --------
 
 # read a single time series and create a sts object
@@ -93,24 +146,6 @@ algo.summary(ten.surv)
 
 ## ------------- Apply Many Methods to Many Simulated Daily Time Series --------
 
-## ------------- Read Files -------------
-
-# Set this number low for initial attempts, then use all the runs (at the indicated
-#  concentration and duration) to answer the questions.
-nruns = 100
-
-# Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
-runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
-
-# If you want to use the same sample of runs each time, save the runids and then reload
-#  them again, as opposed to generating new ids
-
-#write(runids,"runids.txt")
-#runids = (read.table("runids.txt"))[,1]
-
-# load runs corresponding to runids
-# runs = load.runs(data.dir, runids, os="mac")
-runs = load.runs(data.dir, runids, os="mac")
 
 
 
