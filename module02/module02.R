@@ -14,7 +14,7 @@ library(MESS)
 
 # Set this number low for initial attempts, then use all the runs (at the indicated
 #  concentration and duration) to answer the questions.
-nruns = 100
+nruns = 10
 
 # Generate n (1 to 100) runids for scenario with concentration 0.1 and duration 24 hours
 runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
@@ -27,9 +27,17 @@ runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 
 # load runs corresponding to runids
 # runs = load.runs(data.dir, runids, os="mac")
-runs = load.runs.better(data.dir, runids, os="mac")
+runs = load.runs(data.dir, runids, os="mac")
 
-
+# plot the runs
+plot.col = 2
+plot.row = length(runs) / plot.col
+par(mfrow=c(plot.row, plot.col))
+for (run in 1:length(runs)) {
+  plot(as.Date(runs[[run]]$date), runs[[run]]$baseline.outbreak_count, type='l',
+       ylab="count", xlab="Date")
+}
+par(mfrow=c(1,1))
 
 ## ------------- Describe Outbreaks -------------
 
