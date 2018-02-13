@@ -3,7 +3,8 @@
 ## ------------- Load Data -------------
 
 # Read data files as downloaded after minor cleaning
-setwd("/Users/david/GitHub/pphs616")
+# setwd("/Users/david/GitHub/pphs616")
+setwd("/Users/davidbuckeridge/GitHub/pphs616") #laptop
 death = read.csv("data/Table_S1_clean.csv")
 
 # Cast columns to correct data types
