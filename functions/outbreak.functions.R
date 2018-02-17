@@ -62,7 +62,7 @@ load.runs <- function(directory, runids, os="mac") {
   filenames.tocheck = lapply(tokens, function (token) {substring(token[[3]], 1, nchar(token[[3]])-4)})
   # extract the filenames matching the runids
   filenames.toread = filenames[filenames.tocheck %in% runids]
-
+  
   return(lapply(filenames.toread, read.csv))
 } # load.runs
 
