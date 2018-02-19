@@ -8,9 +8,96 @@ key.filename = "data/key.csv"
 source("functions/outbreak.functions.R")
 
 # load libraries
+library(surveillance)
 library(MESS)
 
-## ------------- Read Files -------------
+## 1. Using the surveillance package to simulate and test
+## ------------- Comparing the EARS methods --------
+
+# simulate a time series
+one.sts = sim.pointSource(p = 0.99, r = 0.5, length = 400,
+                       A = 1, alpha = 1, beta = 0, phi = 0,
+                       frequency = 1, state = NULL, K = 1.7)
+
+# simulate many time series
+many = 10
+many.sts = lapply(1:many, function(x) {
+                  sim.pointSource(p = 0.99, r = 0.5, length = 400,
+                                  A = 1, alpha = 1, beta = 0, phi = 0,
+                                  frequency = 1, state = NULL, K = 1.7)})
+
+plot(one.sts)
+
+
+# create algorithm control object
+C1.control = list(
+  method = "C1",
+  baseline = 7,
+  alpha = 0.001,
+  range=c(100:400))
+
+# apply C1 algorithm to one sts
+C1.one = earsC(disProg2sts(one.sts), control = C1.control)
+
+# apply C1 algorith to many sts
+C1.many = lapply(many.sts, function(ts) {
+  earsC(disProg2sts(ts), control=C1.control)})
+
+# plot results for single application
+plot(C1.one)
+
+# assess performance for single application
+algo.quality(C1.one)
+
+# assess performance
+C1.many.quality = as.data.frame(algo.compare(C1.many))
+
+C1.many.se = sum(unlist(C1.many.quality$TP)) / sum(unlist(C1.many.quality$TP) + unlist(C1.many.quality$FN))
+C1.many.sp = sum(unlist(C1.many.quality$TN)) / sum(unlist(C1.many.quality$TN) + unlist(C1.many.quality$FP))
+
+
+
+## Q1. Compare the performance of C1, C2, and C3 using the default settings. 
+## Apply all methods with default settings to same simulated outbreaks. Calculate 
+##  overall sensitivity and specificty for each method. Which is better and why? Comment 
+##  on how sensitivity is calculated.
+
+
+
+
+
+## ------------- Finding the best parameters for the Farrington method --------
+
+# Declare algorithms to apply and set their parameters 
+F.control = list(
+  list(funcName = "farrington", alpha=0.01),
+  list(funcName = "farrington", alpha=0.05))
+
+
+# Define interval in sts for surveillance. Note that you need to have sufficient
+#  "lead time" to apply the Farrington algorithm
+F.control = lapply(F.control, function(ctrl) {
+  ctrl$range = 300:400; return(ctrl)})
+
+
+# apply to all simulated series, with results as list
+F.many = lapply(many.sts, function(ts) {
+  algo.compare(algo.call(ts, control=F.control)) })
+
+
+#Average results
+F.many.quality = algo.summary(F.many)
+
+
+## Q2. Generate the necessary results and plot an ROC curve using at least ten points 
+##      (not counting the origins). Which threshold do you recommend be used and why?
+
+
+
+
+
+## 2. Using base R commands with externally simuated outbreaks
+## ------------- Read Simulated Outbreaks -------------
 
 # Set this number low for initial attempts, then use all the runs (at the indicated
 #  concentration and duration) to answer the questions.
@@ -29,6 +116,7 @@ runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 # runs = load.runs(data.dir, runids, os="mac")
 runs = load.runs(data.dir, runids, os="mac")
 
+<<<<<<< HEAD
 # plot the runs
 plot.col = 2
 plot.row = length(runs) / plot.col
@@ -38,6 +126,9 @@ for (run in 1:length(runs)) {
        ylab="count", xlab="Date")
 }
 par(mfrow=c(1,1))
+=======
+
+>>>>>>> origin/master
 
 ## ------------- Describe Outbreaks -------------
 
@@ -51,6 +142,12 @@ hist(unlist(sapply(outbreaks, "[", "length")), xlab="Duration (Days)", main="Dur
 par(mfrow=c(1,1))
 
 
+
+## ------------- Apply Methods to Simulated Daily Time Series --------
+# Number of thresholds to consider when generating ROC curves
+n.cutoffs = 100
+
+
 ## ------------- Apply C2 Algorithm -------------
 
 # Apply C2 algorithm to runs
@@ -59,42 +156,46 @@ res.c2 = lapply(runs, c2_all, gap=2, window=28, threshold=2)
 res.c2.detect = mapply(o.detected, res.c2, outbreaks)
 res.c2.prevent = mapply(o.prevented, res.c2, outbreaks)
 
+# Calculate accuracy and timeliness for each run
+performance.c2.all = a.performance.all(res.c2, outbreaks, n.cutoffs)
+# Calculate average accuracy and timeliness acros all runs
+performance.c2.avg = a.performance.avg(performance.c2.all)
+# Calculate area under ROC curves
+auc.c2 = auc(performance.c2.avg$far, performance.c2.avg$detected)
+auc.c2.weighted = auc(performance.c2.avg$far, (performance.c2.avg$detected*performance.c2.avg$prevented))
+
+# Plot ROC curves
+par(mfrow=c(1,2))
+plot(performance.c2.avg$far, performance.c2.avg$detected, type='s', 
+     xlab='False Positive Rate', ylab="Sensitivity", xlim=c(0,1))
+plot(performance.c2.avg$far, performance.c2.avg$detected*performance.c2.avg$prevented, type='s', 
+     xlab='False Positive Rate', ylab="Sensitivity x Prevented", xlim=c(0,1))
+par(mfrow=c(1,1))
+
+
+## Q3. Determine the effect of the gap parameter on the performance of the C2 algorithm (sensitivity, specificity,
+##      and detection delay). Vary the gap parameter over at least five settings and summarize your results.  
+
+
+
 
 ## ------------- Apply Poisson Algorithm -------------
 
-# Apply poisson algorithm to runs
+# Apply Poisson algorithm to runs
 res.p = lapply(runs, poisson_all, dow=FALSE, gap=2, window=56, interval=14, threshold=0.05)
 # Determine detection and timeliness for each run
 res.p.far = mapply(a.far, res.p, outbreaks)
 res.p.detect = mapply(o.detected, res.p, outbreaks)
 res.p.prevent = mapply(o.prevented, res.p, outbreaks)
 
-## ------------- Create Data for Evaluation ------------- 
-
-n.cutoffs = 100
-
-performance.c2.all = a.performance.all(res.c2, outbreaks, n.cutoffs)
-performance.c2.avg = a.performance.avg(performance.c2.all)
-
-par(mfrow=c(1,2))
-plot(performance.c2.avg$far, performance.c2.avg$detected, type='s', 
-		xlab='False Positive Rate', ylab="Sensitivity", xlim=c(0,1))
-plot(performance.c2.avg$far, performance.c2.avg$detected*performance.c2.avg$prevented, type='s', 
-		xlab='False Positive Rate', ylab="Sensitivity x Prevented", xlim=c(0,1))
-par(mfrow=c(1,1))
-
-auc.c2 = auc(performance.c2.avg$far, performance.c2.avg$detected)
-auc.c2.weighted = auc(performance.c2.avg$far, (performance.c2.avg$detected*performance.c2.avg$prevented))
-
-
 performance.p.all = a.performance.all(res.p, outbreaks, n.cutoffs)
 performance.p.avg = a.performance.avg(performance.p.all)
 
 par(mfrow=c(1,2))
 plot(performance.p.avg$far, performance.p.avg$detected, type='s', 
-		xlab='False Positive Rate', ylab="Sensitivity", xlim=c(0,1))
+     xlab='False Positive Rate', ylab="Sensitivity", xlim=c(0,1))
 plot(performance.p.avg$far, performance.p.avg$detected*performance.p.avg$prevented, type='s', 
-		xlab='False Positive Rate', ylab="Sensitivity x Prevented", xlim=c(0,1))
+     xlab='False Positive Rate', ylab="Sensitivity x Prevented", xlim=c(0,1))
 par(mfrow=c(1,1))
 
 auc.p = auc(performance.p.avg$far, performance.p.avg$detected)
@@ -102,24 +203,8 @@ auc.p.weighted = auc(performance.p.avg$far, (performance.p.avg$detected*performa
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Q4. Determine the effect of the dow parameter on the performance of the Poisson algorithm (sensitivity, specificity,
+##      and detection delay).  
 
 
 
