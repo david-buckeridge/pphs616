@@ -58,8 +58,14 @@ load.runs <- function(directory, runids, os="mac") {
   # split on seperator
   tokens = strsplit(filenames, seperator)
 
+  if (length(tokens) > 1) {
+    n.tokens = length(tokens[[1]])
+  } else {
+    stop("load.runs: Cannot access filenames for runs - check directory path.")
+  } # check token size
+  
   # lapply function to extract last token and remove last four characters (.csv)
-  filenames.tocheck = lapply(tokens, function (token) {substring(token[[3]], 1, nchar(token[[3]])-4)})
+  filenames.tocheck = lapply(tokens, function (token) {substring(token[[n.tokens]], 1, nchar(token[[n.tokens]])-4)})
   # extract the filenames matching the runids
   filenames.toread = filenames[filenames.tocheck %in% runids]
   
