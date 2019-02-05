@@ -116,19 +116,7 @@ runids = get.runids(key.filename, concentration=0.01, duration=72, n=nruns)
 # runs = load.runs(data.dir, runids, os="mac")
 runs = load.runs(data.dir, runids, os="mac")
 
-<<<<<<< HEAD
-# plot the runs
-plot.col = 2
-plot.row = length(runs) / plot.col
-par(mfrow=c(plot.row, plot.col))
-for (run in 1:length(runs)) {
-  plot(as.Date(runs[[run]]$date), runs[[run]]$baseline.outbreak_count, type='l',
-       ylab="count", xlab="Date")
-}
-par(mfrow=c(1,1))
-=======
 
->>>>>>> origin/master
 
 ## ------------- Describe Outbreaks -------------
 
