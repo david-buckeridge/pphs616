@@ -1,11 +1,16 @@
+## ------------- Set Directory -------------
 
+# load libraries
+options(gsubfn.engine = "R")
 library(sqldf)
 
+## ------------- Read Files -------------
+setwd("/Users/davidbuckeridge/GitHub/pphs616")
 # Read in data
 # (Do not use '.' in the variable name or it will be hard to work with sqldf)
-hospital_discharges <- read.csv('data/hospital_discharges.csv')
-physician_services <- read.csv('data/physician_services.csv')
-sampled_patients <- read.csv('data/sampled_patients.csv')
+hospital_discharges = read.csv('data/hospital_discharges.csv')
+physician_services = read.csv('data/physician_services.csv')
+sampled_patients = read.csv('data/sampled_patients.csv')
 
 hospital_discharges$admit = as.Date(hospital_discharges$admit)
 hospital_discharges$discharge = as.Date(hospital_discharges$discharge)
@@ -24,8 +29,8 @@ physician_services$date = as.Date(physician_services$date)
 
 # Unfortunately the SQLite backend doesn't support regex operators.
 # Using the admission date only because I have to pick one. Discharge would also work.
-hospital_diag <- 
-  sqldf("SELECT anon_id,admit as diab_date 
+hospital_diag = 
+  sqldf("SELECT anon_id, admit as diab_date 
          FROM hospital_discharges 
          WHERE (icd_type='ICD-9'  AND icd LIKE '250%')
             OR (icd_type='ICD-10' AND (icd LIKE 'E10%' OR
