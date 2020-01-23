@@ -1,7 +1,7 @@
 # A function to return the mean value of the entries in the values.col from a
 #  data.frame, where the category.col is equal to category. 
 extract.mean.value <- function(data.frame, category, category.col, values.col) {
-  mean(data.frame[data.frame[,category.col]==category, values.col])
+  mean(data.frame[[values.col]][data.frame[,category.col]==category])
 } # extract.mean.value
 
 # A function to update a results.frame by overwriting it with a new version where
