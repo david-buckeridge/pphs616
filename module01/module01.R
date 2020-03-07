@@ -65,18 +65,31 @@ points(death$DEATHDT, (death$neuzil*3500-50), pch="-", cex=1)
 # Calculate excess mortality using periseason approaches
 weeks.p = sum(death$peri==TRUE & death$neuzil==FALSE)
 count.p = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE)])
-
 weeks.n = sum(death$peri==TRUE & death$neuzil==TRUE)
 count.n = sum(death$COUNT[(death$peri==TRUE & death$neuzil==TRUE)])
 
-
-# Rate difference (deaths / week)
+# Rate difference (deaths / week) - note that we are computing a common rate difference across all seasons
 rd.n = (count.n / weeks.n) - (count.p / weeks.p)
 
+
+# A variation where we calculate the rate difference by season
+rd.n.season = NULL # an empty vector we will grow by adding a new result for each season...
+for (season in seasons) {
+  weeks.p.season = sum(death$peri==TRUE & death$neuzil==FALSE & death$YRSEAS == season)
+  count.p.season = sum(death$COUNT[(death$peri==TRUE & death$neuzil==FALSE & death$YRSEAS == season)])
+  weeks.n.season = sum(death$peri==TRUE & death$neuzil==TRUE & death$YRSEAS == season)
+  count.n.season = sum(death$COUNT[(death$peri==TRUE & death$neuzil==TRUE & death$YRSEAS == season)])
+  rd.n.season = c(rd.n.season, (count.n.season / weeks.n.season) - (count.p.season / weeks.p.season))
+}
+
+# Create data structure to hold results for excess deaths calculated using the different approaches
 excess = data.frame(season=seasons, n.total=rep(NA,length(seasons)), n.weeks=rep(NA,length(seasons)))
+
+# Calculate excess deaths using the peri-season approach and store results in the 'excess' data frame
 for (season in seasons) {
 	excess$n.weeks[excess$season==season] = nrow(death[death$peri==TRUE & death$neuzil==TRUE & death$YRSEAS==season,])
 	excess$n.total[excess$season==season] = sum(rd.n * excess$n.weeks[excess$season==season])
+	excess$n.season[excess$season==season] = sum(rd.n.season[which(seasons == season)] * excess$n.weeks[excess$season==season])
 } # for - seasons
 
 
@@ -166,10 +179,16 @@ for (season in seasons) {
 require(lattice)
 
 # Prepare the data structure
-excess.total = excess[,c("season","n.total","s.pos.total","p.pos.total")]
-methods=c("neuzil","serfling","poisson")
-methods.vector = c(rep(methods[1],length(seasons)), rep(methods[2],length(seasons)), rep(methods[3],length(seasons)))
-excess.long = data.frame(season=rep(seasons,3), method=methods.vector, deaths=rep(NA,length(seasons)*3))
+excess.total = excess[,c("season","n.total","n.season","s.pos.total","s.all.total","p.pos.total","p.all.total")]
+methods=c("neuzil","neuzil (season)","Serfling (positive)","Serfling (all)", "Poisson (positive)", "Poisson (all)")
+
+# create vector of method labels
+methods.vector = NULL
+for (method in methods){
+  methods.vector = c(methods.vector, rep(method,length(seasons)))
+}
+
+excess.long = data.frame(season=rep(seasons,length(methods)), method=methods.vector, deaths=rep(NA,length(seasons)*length(methods)))
 for (season in seasons) {
 	for (method in methods) {
 		excess.long$deaths[excess.long$season==season & excess.long$method==method] = excess.total[excess.total==season, (which(methods==method)+1)]
