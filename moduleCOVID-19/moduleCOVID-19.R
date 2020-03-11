@@ -50,7 +50,7 @@ names(country.counts) = jhu.country.region
 for (country in jhu.country.region) {
   country.cases = aggregateJHUCounts(jhu.cases[jhu.cases$Country.Region == country,])
   country.deaths = aggregateJHUCounts(jhu.deaths[jhu.deaths$Country.Region == country,])
-  country.recovered = aggregateJHUCounts(jhu.recovered[jhu.deaths$Country.Region == country,])
+  country.recovered = aggregateJHUCounts(jhu.recovered[jhu.recovered$Country.Region == country,])
   
   # place daily counts in list, indexed by country
   country.counts[[country.region]] = list("country" = country, 
