@@ -50,44 +50,55 @@ names(country.counts) = jhu.country.region
 for (country in jhu.country.region) {
   country.cases = aggregateJHUCounts(jhu.cases[jhu.cases$Country.Region == country,])
   country.deaths = aggregateJHUCounts(jhu.deaths[jhu.deaths$Country.Region == country,])
-  country.recovered = aggregateJHUCounts(jhu.recovered[jhu.deaths$Country.Region == country,])
+  country.recovered = aggregateJHUCounts(jhu.recovered[jhu.recovered$Country.Region == country,])
   
   # place daily counts in list, indexed by country
-  country.counts[[country.region]] = list("country" = country, 
-                                          "cases"= country.cases, 
-                                          "deaths" = country.deaths,
-                                          "recovered" = country.recovered)
+  country.counts[[country]] = list("country" = country, 
+                                   "cases" = country.cases, 
+                                   "deaths" = country.deaths,
+                                   "recovered" = country.recovered)
 } # for country
 
 
-# TODO: create function for calculating incident events from cumulative series, then add the
-#       incident series to country.counts as new indicators.
-
-
-###### NOT WORKING
 # Create long data structure for plotting time series 
-# country, date, indicator, value
-indicator.types = c("cases", "deaths", "recovered") # order must reflect order in country.counts objects
-col.dim = 4 # the columns above
-row.dim = jhu.n.country * jhu.days * length(indicator.types)
-country.counts.long = data.frame(country=rep(jhu.country.region,length.out=row.dim), 
-                                date=rep(jhu.dates,length.out=row.dim),
-                                indicator=rep(indicator.types, length.out=row.dim), 
-                                value=rep(NA,row.dim))
+data.list <- list(cases = jhu.cases, deaths = jhu.deaths, recovered = jhu.recovered)
+# Create incidence of cases, deaths, and recovered
+incident.data.list <- 
+  lapply(data.list, function(x) 
+    data.frame(x[1:jhu.first.date.col], t(apply(x[jhu.first.date.col:ncol(x)], 1, diff))))
+names(incident.data.list) <- paste0("incident.", names(data.list))
+data.list <- c(data.list, incident.data.list) 
 
-for (country.region in jhu.country.region) {
-  country.object = country.counts[[country.region]]
-  for (indicator in indicator.types) {
-    index.type = which(indicator.types == indicator)
-    country.series = country.object[[index.type+1]]
-    
-    country.counts.long[country.counts.long$country == country.region &
-                        country.counts.long$indicator == indicator,4] = as.vector(country.series)
-    
-  } # indicator
-} # country
+# Melt the data.frames, bind, and aggregate.
+library(reshape2)
+library(dplyr)
+library(magrittr)
+id.vars <- c("Province.State", "Country.Region", "Lat", "Long")
 
+# All statistics should be easy to extract from counts.long
+counts.long <- 
+  sapply(data.list, melt, id.vars = id.vars, variable.name = "date", simplify = FALSE) %>% 
+  bind_rows(.id = "indicator") %>% 
+  mutate(date = as.Date(date, "X%m.%d.%y")) %>% 
+  arrange(date)
+country.counts.long <-
+  counts.long %>% 
+  group_by(Country.Region, date, indicator) %>% 
+  summarise(value = sum(value)) %>% 
+  arrange(date)
 
+# Sample plot of Canada
+library(ggplot2)
+# Cumulative
+ggplot(country.counts.long %>% 
+         filter(Country.Region == "Canada" & !startsWith(indicator, "incident.")),
+       aes(x = date, y = value, colour = indicator)) +
+  geom_line()
+# Incident
+ggplot(country.counts.long %>% 
+         filter(Country.Region == "Canada" & startsWith(indicator, "incident.")),
+       aes(x = date, y = value, colour = indicator)) +
+  geom_line()
 
 
 ## ------------ Extract information about each Country from time series ------
@@ -114,11 +125,6 @@ for (country.region in jhu.country.region) {
 }
 
 # Create long data structure for visualizing indicator data
-
-
-
-
-
 
 ## ------------------ Plot time-series --------------------------
 
