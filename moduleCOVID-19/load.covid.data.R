@@ -8,6 +8,7 @@ JHU.CSSE.COVID19.github.raw <- "https://raw.githubusercontent.com/CSSEGISandData
 # All timeseries loaded uses a *wide* format. Where a few initial columns are constant, and each day is added
 # as a column to the end of the data. This means the number of columns of this data is variable (ie. *not* constant).
 
+# Yesterday's date is used to limit data. Data on the same day, or the previous day is highly unstable.
 yesterday <- today() - 1
 
 # WHO report
@@ -17,7 +18,7 @@ who.cases <- read_csv(
   rename(state = `Province/States`, country = `Country/Region`, who.region = `WHO region`) %>% # easier to work with
   gather(date, count, -c(state, country, who.region)) %>% # Wide to Long
   mutate(date = mdy(date)) %>% # Parsing Month/Day/Year as dates
-  filter(date <= yesterday) # Today will have incomplete date
+  filter(date < yesterday)
 
 # CSSE's time series (note. be careful with Lat & Long arithmetic, since they're double, might have prec. issue)
 cols_cfg <- cols(.default = col_integer(), `Province/State` = col_factor(), `Country/Region` = col_factor(), Lat = col_double(), Long = col_double())
@@ -26,7 +27,7 @@ jhu.data <- read_csv(paste0(JHU.CSSE.COVID19.github.raw, "csse_covid_19_data/css
   inner_join(read_csv(paste0(JHU.CSSE.COVID19.github.raw, "csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"), col_types = cols_cfg) %>% gather(date, recovered, -(1:4))) %>%
   rename(state = `Province/State`, country = `Country/Region`, lat = Lat, long = Long) %>% # easier to work with
   mutate(date = mdy(date)) %>% # Parsing Month/Day/Year as dates
-  filter(date <= yesterday) # Today will have incomplete date
+  filter(date < yesterday)
 
 # Global variables
 jhu.dates <- sort(unique(jhu.data$date))
