@@ -100,42 +100,7 @@ ggplot(df.meta %>% inner_join(countries.location)) +
 # start with second day
 
 # for all days
-  # subtract value for previous day from value for today to obtain new events today 
-
-# NOTE(malavv) CFR in this function seem to want to compare two groups. Haven't read the paper yet. I'll make it work
-#              for China vs South Korea
-full.data <- df %>%
-  filter(country %in% c("Mainland China", "Republic of Korea")) %>%
-  filter(date != "2020-01-22" & date <= "2020-03-07") %>% # Removing first date, because incidence is NA
-  arrange(date) %>% group_by(country) %>%
-  mutate(
-    time = row_number(),
-    new.times = time,
-    grp = ifelse(country == "Mainland China", 1, 2)
-  ) %>% ungroup() %>%
-  rename(
-    R = inc.recovered,
-    D = inc.death,
-    N = case
-  ) %>% select(grp, time, new.times, N, D, R)
-
-# Creating an assumed.nu survival probability vector
-# from "Updated understanding of the outbreak of 2019 novel coronavirus (2019‐nCoV) in Wuhan, China"
-# https://onlinelibrary.wiley.com/doi/full/10.1002/jmv.25689?af=R
-times2death <- c(20, 16, 10, 6, 10, 14, 41, 12, 30, 7, 19, 13, 11, 20, 19, 8, 16)
-nb <- MASS::fitdistr(times2death,"negative binomial") # Fit observed data to a neg. bin.
-dens <- dnbinom(unique(full.data$time), nb$estimate["size"], mu = nb$estimate["mu"]) # Get density based on neg. binom.
-dens <- dens / sum(dens) # Normalize vector because we use finite range
-
-# Running the thing
-cfr.ests <- EMforCFR(
-  assumed.nu = dens,
-  alpha.start.values = rep(0, 45 - 1),
-  full.data = as.data.frame(a),
-  verb = T,
-  SEM.var = TRUE,
-  max.iter = 500,
-  tol = 1e-05)
+  # subtract value for previous day from value for today to obtain new events today
 
 ## ------------------ Is COVID-19 Controllable ------------------
 # estimate and plot parameters for COVID-19 on Figure in article from Fraser
@@ -143,6 +108,20 @@ cfr.ests <- EMforCFR(
 
 ## ------------------ Something else! ---------------------------
 
+## ------------------ Aligned case series -----------------------
+num.cases.for.date.align <- 50
+
+df <- jhu.data %>%
+  # Removed China for readability, and Cruise Ship for relevance
+  filter(case > num.cases.for.date.align & !(country %in% c("China", "Cruise Ship"))) %>%
+  arrange(date) %>%
+  group_by(country) %>%
+  mutate(time = row_number())
+
+ggplot(a, aes(x=time)) +
+  geom_line(aes(y=case, color=country)) +
+  labs(title = sprintf("Country's case evolution starting at %d cases", num.cases.for.date.align),
+       x = "Days since threshold", y = "Number of cases")
 
 ## ------------------ Functions ---------------------
 # Function to aggregate case counts across regions in a country, if necessary
