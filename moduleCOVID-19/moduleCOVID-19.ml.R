@@ -111,7 +111,7 @@ ggplot(df.meta %>% inner_join(countries.location)) +
 ## ------------------ Aligned case series -----------------------
 num.cases.for.date.align <- 50
 
-df <- jhu.data %>%
+df <- df %>%
   # Removed China for readability, and Cruise Ship for relevance
   filter(case > num.cases.for.date.align & !(country %in% c("China", "Cruise Ship"))) %>%
   arrange(date) %>%
