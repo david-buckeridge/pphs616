@@ -12,27 +12,14 @@ library(maps)
 ## ------------- Load Data ---------------------------
 # Read data files as downloaded from GitHub
 # https://github.com/CSSEGISandData/COVID-19
-# As described in Dong, E., Du, H., & Gardner, L. (2020). 
-#  An interactive web-based dashboard to track COVID-19 in 
+# As described in Dong, E., Du, H., & Gardner, L. (2020).
+#  An interactive web-based dashboard to track COVID-19 in
 #  real time. The Lancet. Infectious Diseases.
 #  http://doi.org/10.1016/S1473-3099(20)30120-1
 source("./load.covid.data.R")
 
-
-# Remove unused details, and aggregate states by country
-df <- jhu.data %>%
-  select(-state) %>%
-  group_by(country, date) %>%
-  summarise(
-    case = sum(case, na.rm = T),
-    death = sum(death, na.rm = T),
-    recovered = sum(recovered, na.rm = T),
-    lat = mean(lat), long = mean(long) # Centroid? this feel wrong
-  ) %>% ungroup()
-
-
 # TODO: Calculate incident events from cumulative series, then add the incident series to dataset
-df <- df %>%
+df <- jhu.country.data %>%
   group_by(country) %>%
   mutate(
     inc.case = case - lag(case),
@@ -42,16 +29,11 @@ df <- df %>%
   ungroup()
 
 # TODO: Calculate metadata per countries (date of first event, and totals)
-df <- df %>% group_by(country)
-df.meta <- df %>%
+df.meta <- jhu.country.data %>% group_by(country) %>%
   summarise(cases = last(case), deaths = last(death), recoveries = last(recovered)) %>%
-  inner_join(df %>% filter(case >= 1) %>% summarise(index.case.date = min(date))) %>%
-  left_join(df %>% filter(death >= 1) %>% summarise(index.death.date = min(date))) %>%
-  left_join(df %>% filter(recovered >= 1) %>% summarise(index.recovery.date = min(date)))
-df <- df %>% ungroup()
-
-# TODO: Merge with WHO data to obtain WHO regions (WHO estimates are <= then JHU)
-# NOTE(malavv): WHO country names do not match at all with JHU, and there are much fewer country.
+  inner_join(jhu.country.data %>% group_by(country) %>% filter(case >= 1) %>% summarise(index.case.date = min(date))) %>%
+  left_join(jhu.country.data %>% group_by(country) %>% filter(death >= 1) %>% summarise(index.death.date = min(date))) %>%
+  left_join(jhu.country.data %>% group_by(country) %>% filter(recovered >= 1) %>% summarise(index.recovery.date = min(date)))
 
 ## ------------------ Plot time-series --------------------------
 ggplot(df %>% group_by(date) %>% summarise_if(is.numeric, sum, na.rm=T), aes(x=date)) +
@@ -65,12 +47,17 @@ ggplot(df %>% group_by(date) %>% summarise_if(is.numeric, sum, na.rm=T), aes(x=d
 
 ## ----------------- Plot distribution by geography -------------
 # TODO: plot epi curve (i.e., incident cases - hint, difference of cumulative cases will give you this...) by WHO region
-top10.countries <- head(df.meta %>% arrange(desc(cases)), n = 10)$country
+# top10.countries <- head(df.meta %>% arrange(desc(cases)), n = 10)$country
 # Removing first day because incident case makes no sense when no past exist.
-ggplot(df %>% filter(country %in% top10.countries & date != "2020-01-22"), aes(x=date)) +
-  geom_line(aes(y=inc.case, color=country))+
+df.who <- df %>%
+  group_by(who.region, date) %>%
+  filter(date != "2020-01-22") %>%
+  summarise(inc.case = sum(inc.case, na.rm = T)) %>%
+  ungroup()
+ggplot(df.who, aes(x=date)) +
+  geom_line(aes(y=inc.case, color=who.region))+
   scale_x_date(date_breaks = "1 week", date_labels = "%m-%d") +
-  labs(title = "Timeseries of COVID 2019 incidence, Countries with Top 10 Case load",
+  labs(title = "Timeseries of COVID 2019 incidence, WHO regions",
        x = "Week (Month/Day)", y = "Number of incidence cases")
 
 
@@ -111,14 +98,26 @@ ggplot(df.meta %>% inner_join(countries.location)) +
 ## ------------------ Aligned case series -----------------------
 num.cases.for.date.align <- 50
 
-df <- df %>%
+df.evo <- df %>%
   # Removed China for readability, and Cruise Ship for relevance
   filter(case > num.cases.for.date.align & !(country %in% c("China", "Cruise Ship"))) %>%
   arrange(date) %>%
   group_by(country) %>%
-  mutate(time = row_number())
+  mutate(time = row_number()) %>%
+  ungroup()
 
-ggplot(df, aes(x=time)) +
+ggplot(df.evo, aes(x=time)) +
   geom_line(aes(y=case, color=country)) +
   labs(title = sprintf("Country's case evolution starting at %d cases", num.cases.for.date.align),
        x = "Days since threshold", y = "Number of cases")
+
+## ---------------- Daily naive CFR --------------------------
+daily.cfr <- df %>% mutate(cfr = death / case) %>%
+  group_by(country) %>%
+  filter(sum(case) > 1000) %>% # Limit output to large Ns
+  ungroup()
+
+ggplot(daily.cfr %>% mutate(cfr = death / case) %>% filter(sum(case) > 1000), aes(x=date)) +
+  geom_line(aes(y=cfr, color=country), size=1) +
+  scale_x_date(limits = c(ymd("2020-02-20", today() - 1)), date_breaks = "3 day", date_labels = "%m-%d") +
+  scale_y_continuous(limits = c(0, 0.08)) + labs(title = "Case-Fatality Risk per Country", x="Date", y="Case-Fatality Risk")

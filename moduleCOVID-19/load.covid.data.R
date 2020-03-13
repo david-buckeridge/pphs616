@@ -29,6 +29,22 @@ jhu.data <- read_csv(paste0(JHU.CSSE.COVID19.github.raw, "csse_covid_19_data/css
   mutate(date = mdy(date)) %>% # Parsing Month/Day/Year as dates
   filter(date < yesterday)
 
+# Create a simplified dataframe, aggregated by country
+jhu.country.data <- jhu.data %>%
+  select(-state) %>%
+  group_by(country, date) %>%
+  summarise(
+    case = sum(case, na.rm = T),
+    death = sum(death, na.rm = T),
+    recovered = sum(recovered, na.rm = T),
+    lat = mean(lat), long = mean(long) # Centroid? this feel wrong
+  ) %>%
+  ungroup()
+
+# TODO: Merge with WHO data to obtain WHO regions (WHO estimates are <= then JHU)
+country2who.region <- read_csv('country2who.region.csv', col_types = 'cc')
+jhu.country.data <- jhu.country.data %>% inner_join(country2who.region, by="country")
+
 # Global variables
 jhu.dates <- sort(unique(jhu.data$date))
 jhu.countries <- levels(jhu.data$country)
