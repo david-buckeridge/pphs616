@@ -32,22 +32,11 @@ df <- jhu.country.data %>%
 
 # TODO: Calculate metadata per countries (date of first event, and totals)
 df.meta <- jhu.country.data %>% group_by(country) %>%
-  summarise(cases = last(case), deaths = last(death), recoveries = last(recovered)) %>%
-<<<<<<< HEAD
-  inner_join(df %>% filter(case >= 1) %>% summarise(index.case.date = min(date))) %>%
-  left_join(df %>% filter(death >= 1) %>% summarise(index.death.date = min(date))) %>%
-  left_join(df %>% filter(recovered >= 1) %>% summarise(index.recovery.date = min(date)))
-df <- df %>% ungroup()
-
-
-
-# TODO: Merge with WHO data to obtain WHO regions (WHO estimates are <= then JHU)
-# NOTE(malavv): WHO country names do not match at all with JHU, and there are much fewer country.
-=======
+  summarise(cases = last(case), deaths = last(death), recoveries = last(recovered), cCFR = last(death) / last(case)) %>%
   inner_join(jhu.country.data %>% group_by(country) %>% filter(case >= 1) %>% summarise(index.case.date = min(date))) %>%
   left_join(jhu.country.data %>% group_by(country) %>% filter(death >= 1) %>% summarise(index.death.date = min(date))) %>%
   left_join(jhu.country.data %>% group_by(country) %>% filter(recovered >= 1) %>% summarise(index.recovery.date = min(date)))
->>>>>>> origin/master
+
 
 ## ------------------ Plot time-series --------------------------
 ggplot(df %>% group_by(date) %>% summarise_if(is.numeric, sum, na.rm=T), aes(x=date)) +
@@ -60,21 +49,18 @@ ggplot(df %>% group_by(date) %>% summarise_if(is.numeric, sum, na.rm=T), aes(x=d
 
 
 ## ----------------- Plot distribution by geography -------------
-# TODO: plot epi curve (i.e., incident cases - hint, difference of cumulative cases will give you this...) by WHO region
-<<<<<<< HEAD
+
 top10.countries <- head(df.meta %>% arrange(desc(deaths)), n = 8)$country
 # Removing first day because incident case makes no sense when no past exist.
 ggplot(df %>% filter(country %in% top10.countries & date != "2020-01-22"), aes(x=date)) +
   geom_line(aes(y=cCFR, color=country))+
   scale_x_date(date_breaks = "1 week", date_labels = "%m-%d") +
   scale_y_continuous(limits = c(0, 0.125)) +
-  labs(title = "Timeseries of COVID 2019 crude CFR, Countries with Top 10 Case load",
+  labs(title = "Timeseries of COVID 2019 crude CFR, Countries with More than 10 Deaths",
        x = "Week (Month/Day)", y = "Crude Case Fatality Risk")
 
 
-=======
-# top10.countries <- head(df.meta %>% arrange(desc(cases)), n = 10)$country
-# Removing first day because incident case makes no sense when no past exist.
+# Plot incident cases by WHO region
 df.who <- df %>%
   group_by(who.region, date) %>%
   filter(date != "2020-01-22") %>%
@@ -85,10 +71,9 @@ ggplot(df.who, aes(x=date)) +
   scale_x_date(date_breaks = "1 week", date_labels = "%m-%d") +
   labs(title = "Timeseries of COVID 2019 incidence, WHO regions",
        x = "Week (Month/Day)", y = "Number of incidence cases")
->>>>>>> origin/master
 
 
-# TODO: extra! - create global maps (bubble) of total cases by country
+# Create global map (bubble) of total cases by country
 countries.location <- df %>% select(country, lat, long) %>% unique()
 ggplot(df.meta %>% inner_join(countries.location)) +
   borders("world", colour="gray50", fill="gray50") +
