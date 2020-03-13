@@ -118,44 +118,7 @@ df <- jhu.data %>%
   group_by(country) %>%
   mutate(time = row_number())
 
-ggplot(a, aes(x=time)) +
+ggplot(df, aes(x=time)) +
   geom_line(aes(y=case, color=country)) +
   labs(title = sprintf("Country's case evolution starting at %d cases", num.cases.for.date.align),
        x = "Days since threshold", y = "Number of cases")
-
-## ------------------ Functions ---------------------
-# Function to aggregate case counts across regions in a country, if necessary
-aggregateJHUCounts <- function(x) {
-  if (nrow(x) > 1) {
-    # if multiple rows for a country, aggregate case counts to form single row
-    counts <- rowsum(x[,5:ncol(x)], group=rep(1, nrow(x)))
-  } else {
-    # otherwise use single set of counts
-    counts <- x[,5:ncol(x)]
-  }   
-  return(counts)
-} # aggregateJHUCounts
-
-
-# Function to be used in lapply to extract maximum case count (should be last value..)
-# We create the index knowing first entry is country name and second entry is list, containing
-#  country name (to ensure integrity) in first slot, and vectors of integer counts for cases,
-#  deaths, and recovered in subsequent slots in that order.
-current.count <- function(x, count.type) {
-  valid.types <- c("cases", "deaths", "recovered")
-  index.type <- which(valid.types == count.type)
-  
-  return(max(x[[(index.type + 1)]]))
-}
-
-# Function to return the day of the first event of the type requested
-#  (as 1-indexed integer days from jhu.start)
-first.event <- function(x, event.type) {
-  valid.types <- c("cases", "deaths", "recovered")
-  index.type <- which(valid.types == event.type)
-  
-  index.events <- which(x[[index.type + 1]] > 0)
-  
-  return(ifelse(length(index.events) > 0, min(index.events), NA))
-}
-
