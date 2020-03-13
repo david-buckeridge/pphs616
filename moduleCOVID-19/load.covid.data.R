@@ -14,7 +14,7 @@ who.cases <- read_csv(
   rename(state = `Province/States`, country = `Country/Region`, who.region = `WHO region`) %>% # easier to work with
   gather(date, count, -c(state, country, who.region)) %>% # Wide to Long
   mutate(date = mdy(date)) %>% # Parsing Month/Day/Year as dates
-  filter(date <= ymd("2020-03-09")) # Today will have incomplete date
+  filter(date <= ymd("2020-03-12")) # Today will have incomplete date
 
 # CSSE's time series (note. be careful with Lat & Long arithmetic, since they're double, might have prec. issue)
 cols_cfg <- cols(.default = col_integer(), `Province/State` = col_factor(), `Country/Region` = col_factor(), Lat = col_double(), Long = col_double())
@@ -23,7 +23,7 @@ jhu.data <- read_csv(paste0(JHU.CSSE.COVID19.github.raw, "csse_covid_19_data/css
   inner_join(read_csv(paste0(JHU.CSSE.COVID19.github.raw, "csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"), col_types = cols_cfg) %>% gather(date, recovered, -(1:4))) %>%
   rename(state = `Province/State`, country = `Country/Region`, lat = Lat, long = Long) %>% # easier to work with
   mutate(date = mdy(date)) %>% # Parsing Month/Day/Year as dates
-  filter(date <= ymd("2020-03-09")) # Today will have incomplete date
+  filter(date <= ymd("2020-03-12")) # Today will have incomplete date
 
 # Global variables
 jhu.dates <- sort(unique(jhu.data$date))

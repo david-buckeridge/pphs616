@@ -37,9 +37,11 @@ df <- df %>%
   mutate(
     inc.case = case - lag(case),
     inc.death = death - lag(death),
-    inc.recovered = recovered - lag(recovered)
+    inc.recovered = recovered - lag(recovered),
+    cCFR = ifelse(death > 10, death / case, NA)
   ) %>%
   ungroup()
+
 
 # TODO: Calculate metadata per countries (date of first event, and totals)
 df <- df %>% group_by(country)
@@ -49,6 +51,8 @@ df.meta <- df %>%
   left_join(df %>% filter(death >= 1) %>% summarise(index.death.date = min(date))) %>%
   left_join(df %>% filter(recovered >= 1) %>% summarise(index.recovery.date = min(date)))
 df <- df %>% ungroup()
+
+
 
 # TODO: Merge with WHO data to obtain WHO regions (WHO estimates are <= then JHU)
 # NOTE(malavv): WHO country names do not match at all with JHU, and there are much fewer country.
@@ -65,13 +69,16 @@ ggplot(df %>% group_by(date) %>% summarise_if(is.numeric, sum, na.rm=T), aes(x=d
 
 ## ----------------- Plot distribution by geography -------------
 # TODO: plot epi curve (i.e., incident cases - hint, difference of cumulative cases will give you this...) by WHO region
-top10.countries <- head(df.meta %>% arrange(desc(cases)), n = 10)$country
+top10.countries <- head(df.meta %>% arrange(desc(deaths)), n = 8)$country
 # Removing first day because incident case makes no sense when no past exist.
 ggplot(df %>% filter(country %in% top10.countries & date != "2020-01-22"), aes(x=date)) +
-  geom_line(aes(y=inc.case, color=country))+
+  geom_line(aes(y=cCFR, color=country))+
   scale_x_date(date_breaks = "1 week", date_labels = "%m-%d") +
-  labs(title = "Timeseries of COVID 2019 incidence, Countries with Top 10 Case load",
-       x = "Week (Month/Day)", y = "Number of incidence cases")
+  scale_y_continuous(limits = c(0, 0.125)) +
+  labs(title = "Timeseries of COVID 2019 crude CFR, Countries with Top 10 Case load",
+       x = "Week (Month/Day)", y = "Crude Case Fatality Risk")
+
+
 
 
 # TODO: extra! - create global maps (bubble) of total cases by country
@@ -79,7 +86,7 @@ countries.location <- df %>% select(country, lat, long) %>% unique()
 ggplot(df.meta %>% inner_join(countries.location)) +
   borders("world", colour="gray50", fill="gray50") +
   geom_point(aes(x=long, y=lat, size=cases), color="red") +
-  scale_size(breaks = seq(1, 150000, by=10000), range = c(0, 10)) +
+  scale_size(breaks = seq(1, 5000, by=1000), range = c(0, 10)) +
   labs(x = "", y = "", title = "Number of COVID 2019 cases by countries")
 
 # Now Layer the cities on top
